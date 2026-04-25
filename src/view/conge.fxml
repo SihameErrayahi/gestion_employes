@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="20" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controller.CongeController"
+      style="-fx-background-color: #F1F5F9;">
+
+    <padding>
+        <Insets top="25" right="25" bottom="25" left="25"/>
+    </padding>
+
+    <Label text="🌴 Gestion des Congés" styleClass="label-title"/>
+    <Label text="Demandes et suivi des congés des employés" styleClass="label-subtitle"/>
+
+    <!-- Formulaire d'ajout -->
+    <VBox spacing="12" style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 20;">
+        <Label text="➕ Nouvelle Demande de Congé"
+               style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #0F172A;"/>
+
+        <HBox spacing="15">
+            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                <Label text="Employé" style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
+                <ComboBox fx:id="employeCombo" promptText="Sélectionner un employé"
+                          maxWidth="Infinity" styleClass="combo-box"/>
+            </VBox>
+            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                <Label text="Type de congé" style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
+                <ComboBox fx:id="typeCombo" promptText="Type de congé"
+                          maxWidth="Infinity" styleClass="combo-box"/>
+            </VBox>
+        </HBox>
+
+        <HBox spacing="15">
+            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                <Label text="Date de début" style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
+                <DatePicker fx:id="dateDebutPicker" maxWidth="Infinity" styleClass="date-picker"/>
+            </VBox>
+            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                <Label text="Date de fin" style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
+                <DatePicker fx:id="dateFinPicker" maxWidth="Infinity" styleClass="date-picker"/>
+            </VBox>
+            <VBox spacing="5">
+                <Label text="Nb. jours" style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
+                <TextField fx:id="nombreJoursField" promptText="0" prefWidth="80"
+                           styleClass="text-field"/>
+            </VBox>
+        </HBox>
+
+        <VBox spacing="5">
+            <Label text="Motif" style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
+            <TextField fx:id="motifField" promptText="Raison du congé..."
+                       styleClass="text-field"/>
+        </VBox>
+
+        <HBox spacing="10">
+            <Button text="📅 Enregistrer la demande" onAction="#ajouterConge"
+                    styleClass="button-primary"/>
+            <Button text="🗑 Annuler" onAction="#annuler"
+                    styleClass="button-secondary"/>
+            <Label fx:id="messageLabel" text=""
+                   style="-fx-text-fill: #10B981; -fx-font-size: 12px; -fx-padding: 0 0 0 10;"/>
+        </HBox>
+    </VBox>
+
+    <!-- Tableau des congés -->
+    <VBox spacing="10" VBox.vgrow="ALWAYS"
+          style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 20;">
+        <Label text="📋 Liste des Congés"
+               style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #0F172A;"/>
+
+        <TableView fx:id="congeTable" VBox.vgrow="ALWAYS" prefHeight="300">
+            <columns>
+                <TableColumn fx:id="colId" text="ID" prefWidth="50"/>
+                <TableColumn fx:id="colEmploye" text="Employé ID" prefWidth="100"/>
+                <TableColumn fx:id="colType" text="Type" prefWidth="110"/>
+                <TableColumn fx:id="colDateDebut" text="Début" prefWidth="100"/>
+                <TableColumn fx:id="colDateFin" text="Fin" prefWidth="100"/>
+                <TableColumn fx:id="colJours" text="Jours" prefWidth="70"/>
+                <TableColumn fx:id="colStatut" text="Statut" prefWidth="110"/>
+                <TableColumn fx:id="colMotif" text="Motif" prefWidth="160"/>
+            </columns>
+        </TableView>
+
+        <HBox spacing="10">
+            <Button text="✅ Approuver" onAction="#approuverConge"
+                    styleClass="button-success"/>
+            <Button text="❌ Refuser" onAction="#refuserConge"
+                    style="-fx-background-color: #F59E0B; -fx-text-fill: white; -fx-padding: 8 18; -fx-background-radius: 8; -fx-cursor: hand;"/>
+            <Button text="🗑 Supprimer" onAction="#supprimerConge"
+                    styleClass="button-danger"/>
+            <Button text="🔄 Actualiser" onAction="#chargerDonnees"
+                    styleClass="button-secondary"/>
+        </HBox>
+    </VBox>
+
+</VBox>

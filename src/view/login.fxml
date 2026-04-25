@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.text.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controller.LoginController"
+      alignment="CENTER" spacing="20"
+      style="-fx-background-color: #1e2a38; -fx-padding: 60;">
+
+    <Label text="Gestion des Employés"
+           style="-fx-text-fill: white; -fx-font-size: 24; -fx-font-weight: bold;"/>
+
+    <Label text="Connexion"
+           style="-fx-text-fill: #aaaaaa; -fx-font-size: 14;"/>
+
+    <TextField fx:id="loginField" promptText="Login"
+               maxWidth="300"
+               style="-fx-background-color: #2e3d50; -fx-text-fill: white; -fx-prompt-text-fill: #888; -fx-padding: 10; -fx-background-radius: 6;"/>
+
+    <PasswordField fx:id="passwordField" promptText="Mot de passe"
+                   maxWidth="300"
+                   style="-fx-background-color: #2e3d50; -fx-text-fill: white; -fx-prompt-text-fill: #888; -fx-padding: 10; -fx-background-radius: 6;"/>
+
+    <Label fx:id="erreurLabel" text=""
+           style="-fx-text-fill: #e74c3c; -fx-font-size: 12;"/>
+
+    <Button text="Se connecter" onAction="#seConnecter"
+            maxWidth="300"
+            style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 10; -fx-background-radius: 6; -fx-cursor: hand;"/>
+
+</VBox>

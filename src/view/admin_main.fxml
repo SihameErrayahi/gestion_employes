@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<BorderPane fx:controller="controller.AdminMainController"
+            xmlns:fx="http://javafx.com/fxml"
+            stylesheets="@style.css">
+
+    <!-- HEADER -->
+    <top>
+        <HBox styleClass="header">
+            <Label text="🛡️ Administration — Gestion des Employés" styleClass="title"/>
+        </HBox>
+    </top>
+
+    <!-- SIDEBAR ADMIN -->
+    <left>
+        <VBox spacing="15" styleClass="sidebar">
+
+            <Label fx:id="adminNomLabel" text="Administrateur"
+                   style="-fx-text-fill: #27ae60; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+
+            <Separator style="-fx-background-color: #3a4a5c;"/>
+
+            <Button text="📊 Dashboard Admin"
+                    onAction="#showAdminDashboard"
+                    styleClass="btn-dashboard"/>
+
+            <Button text="👥 Gestion des RH"
+                    onAction="#showGestionRH"
+                    styleClass="btn-employe"/>
+
+            <Button text="⚙️ Paramètres"
+                    onAction="#showParametres"
+                    styleClass="btn-salaire"/>
+
+            <Separator style="-fx-background-color: #3a4a5c;"/>
+
+            <Button text="🚪 Déconnexion"
+                    onAction="#seDeconnecter"
+                    styleClass="btn-logout"/>
+
+        </VBox>
+    </left>
+
+    <!-- ZONE CONTENU PRINCIPAL -->
+    <center>
+        <StackPane fx:id="adminContentArea" styleClass="content-area"/>
+    </center>
+
+</BorderPane>

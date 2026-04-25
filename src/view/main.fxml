@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<BorderPane fx:controller="controller.MainController"
+            xmlns:fx="http://javafx.com/fxml"
+            stylesheets="@style.css">
+
+    <!-- HEADER -->
+    <top>
+        <HBox styleClass="header">
+            <Label text="Système de Gestion des Employés"
+                   styleClass="title"/>
+        </HBox>
+    </top>
+
+    <!-- SIDEBAR -->
+    <left>
+        <VBox spacing="15" styleClass="sidebar">
+
+            <Button text="Dashboard"
+                    onAction="#showDashboard"
+                    styleClass="btn-dashboard"/>
+
+            <Button text="Gestion Employés"
+                    onAction="#showEmploye"
+                    styleClass="btn-employe"/>
+
+            <Button text="Gestion Salaires"
+                    onAction="#showSalaire"
+                    styleClass="btn-salaire"/>
+
+            <Button text="Gestion Congés"
+                    onAction="#showConge"
+                    styleClass="btn-conge"/>
+            <Label fx:id="utilisateurLabel" text=""
+           style="-fx-text-fill: #aaaaaa; -fx-font-size: 12;"/>
+
+            <Button text="Déconnexion"
+                    styleClass="btn-logout"/>
+
+        </VBox>
+    </left>
+
+    <!-- CONTENT -->
+    <center>
+        <StackPane fx:id="contentArea" styleClass="content-area"/>
+    </center>
+
+</BorderPane>

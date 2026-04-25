@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="25" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controller.AdminParametresController"
+      style="-fx-background-color: #F1F5F9;">
+
+    <padding>
+        <Insets top="40" right="60" bottom="40" left="60"/>
+    </padding>
+
+    <Label text="⚙️ Paramètres Administrateur" styleClass="label-title"/>
+    <Label text="Gérer votre compte administrateur" styleClass="label-subtitle"/>
+
+    <!-- Info compte -->
+    <VBox style="-fx-background-color: #e8f4fd; -fx-background-radius: 10; -fx-padding: 15; -fx-border-color: #3498db; -fx-border-radius: 10; -fx-border-width: 1;">
+        <Label fx:id="infoAdminLabel" text="Compte : admin  |  Rôle : ADMINISTRATEUR"
+               style="-fx-text-fill: #1a5276; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+    </VBox>
+
+    <!-- Formulaire changement MDP -->
+    <VBox spacing="15" maxWidth="450"
+          style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 25;">
+
+        <Label text="🔑 Changer le mot de passe"
+               style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #0F172A;"/>
+
+        <Label text="Ancien mot de passe :" style="-fx-text-fill: #475569;"/>
+        <PasswordField fx:id="ancienMdpField" promptText="Votre mot de passe actuel"
+                       style="-fx-background-radius: 6; -fx-padding: 10;"/>
+
+        <Label text="Nouveau mot de passe :" style="-fx-text-fill: #475569;"/>
+        <PasswordField fx:id="nouveauMdpField" promptText="Min. 6 caractères"
+                       style="-fx-background-radius: 6; -fx-padding: 10;"/>
+
+        <Label text="Confirmer le nouveau mot de passe :" style="-fx-text-fill: #475569;"/>
+        <PasswordField fx:id="confirmNouveauMdpField" promptText="Répéter le nouveau mot de passe"
+                       style="-fx-background-radius: 6; -fx-padding: 10;"/>
+
+        <Label fx:id="messageLabel" text="" wrapText="true"
+               style="-fx-font-size: 13px;"/>
+
+        <Button text="💾 Enregistrer le nouveau mot de passe"
+                onAction="#changerMotDePasse" maxWidth="Infinity"
+                style="-fx-background-color: #8e44ad; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 12; -fx-cursor: hand; -fx-font-size: 13px;"/>
+
+    </VBox>
+
+    <!-- Note sécurité -->
+    <Label text="⚠️ Note : le compte administrateur est unique et ne peut pas être supprimé ni recréé. Gardez bien votre mot de passe."
+           wrapText="true" maxWidth="500"
+           style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px; -fx-font-style: italic;"/>
+
+</VBox>
