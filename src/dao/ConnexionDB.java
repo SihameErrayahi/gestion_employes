@@ -3,15 +3,26 @@ package dao;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 public class ConnexionDB {
 
-	private static final String URL = "jdbc:mysql://localhost:3306/gestion_employes";
-    private static final String USER = "root";
-    private static final String PASSWORD = "sihame1313"; // ton mot de passe MySQL ici
-
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+        try {
+            Properties props = new Properties();
+            FileInputStream fis = new FileInputStream("config.properties");
+            props.load(fis);
+
+            String url = props.getProperty("db.url");
+            String user = props.getProperty("db.user");
+            String password = props.getProperty("db.password");
+
+            return DriverManager.getConnection(url, user, password);
+
+        } catch (IOException e) {
+            throw new SQLException("Erreur chargement config.properties", e);
+        }
     }
-    
 }
