@@ -38,7 +38,8 @@
            style="-fx-text-fill: #aaaaaa; -fx-font-size: 12;"/>
 
             <Button text="Déconnexion"
-                    styleClass="btn-logout"/>
+                    styleClass="btn-logout"
+                    onAction="#seDeconnecter"/>
 
         </VBox>
     </left>

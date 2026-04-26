@@ -145,18 +145,36 @@ public class SalaireController {
     @FXML
     private void ajouterSalaire() {
         if (!valider()) return;
+
         try {
-            Salaire s = new Salaire(0,
-                comboEmploye.getValue().getId(),
-                fieldMois.getText().trim(),
+            int empId = comboEmploye.getValue().getId();
+            String mois = fieldMois.getText().trim();
+
+            // ✅ AJOUT IMPORTANT
+            if (salaireDAO.existe(empId, mois)) {
+                erreur("⚠ Cet employé a déjà un salaire pour ce mois !");
+                return;
+            }
+
+            Salaire s = new Salaire(
+                0,
+                empId,
+                mois,
                 parseD(fieldBase.getText()),
                 parseD(fieldPrimes.getText()),
                 parseD(fieldRetenues.getText())
             );
-            salaireDAO.ajouter(s);
-            chargerSalaires();
-            viderFormulaire();
-            succes("✔ Salaire ajouté avec succès.");
+
+            boolean ok = salaireDAO.ajouter(s);
+
+            if (ok) {
+                chargerSalaires();
+                viderFormulaire();
+                succes("✔ Salaire ajouté avec succès.");
+            } else {
+                erreur("❌ Erreur lors de l'ajout.");
+            }
+
         } catch (Exception ex) {
             erreur("❌ Erreur : " + ex.getMessage());
         }
@@ -182,13 +200,49 @@ public class SalaireController {
     @FXML private void viderChamps() { viderFormulaire(); }
 
     private boolean valider() {
-        if (comboEmploye.getValue() == null)        { erreur("⚠ Sélectionnez un employé."); return false; }
-        if (fieldMois.getText().trim().isEmpty())    { erreur("⚠ Mois requis (yyyy-MM)."); return false; }
-        if (!fieldMois.getText().trim().matches("\\d{4}-\\d{2}")) {
-            erreur("⚠ Format mois invalide. Utilisez yyyy-MM (ex: 2025-03)"); return false;
+        if (comboEmploye.getValue() == null) {
+            erreur("⚠ Sélectionnez un employé.");
+            return false;
         }
-        if (fieldBase.getText().trim().isEmpty())    { erreur("⚠ Salaire de base requis."); return false; }
-        try { parseD(fieldBase.getText()); } catch (Exception ex) { erreur("⚠ Salaire base invalide."); return false; }
+
+        String mois = fieldMois.getText().trim();
+
+        if (!mois.matches("\\d{4}-(0[1-9]|1[0-2])")) {
+            erreur("⚠ Mois invalide. Format : yyyy-MM (ex: 2026-04)");
+            return false;
+        }
+
+        double base, primes, retenues;
+
+        try {
+            base = parseD(fieldBase.getText());
+            primes = parseD(fieldPrimes.getText());
+            retenues = parseD(fieldRetenues.getText());
+        } catch (Exception e) {
+            erreur("⚠ Les montants doivent être des nombres.");
+            return false;
+        }
+
+        if (base <= 0) {
+            erreur("⚠ Salaire de base invalide.");
+            return false;
+        }
+
+        if (primes < 0) {
+            erreur("⚠ Primes négatives interdites.");
+            return false;
+        }
+
+        if (retenues < 0) {
+            erreur("⚠ Retenues négatives interdites.");
+            return false;
+        }
+
+        if (retenues > base + primes) {
+            erreur("⚠ Retenues trop grandes.");
+            return false;
+        }
+
         return true;
     }
 
@@ -205,4 +259,40 @@ public class SalaireController {
         labelMessage.setStyle("-fx-text-fill: #EF4444;");
         labelMessage.setText(msg);
     }
+    @FXML
+    private void modifierSalaire() {
+        Salaire sel = (Salaire) tableSalaires.getSelectionModel().getSelectedItem();
+
+        if (sel == null) {
+            erreur("⚠ Sélectionnez un salaire à modifier.");
+            return;
+        }
+
+        if (!valider()) return;
+
+        try {
+            Salaire s = new Salaire(
+                    sel.getId(),
+                    ((Employe) comboEmploye.getValue()).getId(),
+                    fieldMois.getText().trim(),
+                    parseD(fieldBase.getText()),
+                    parseD(fieldPrimes.getText()),
+                    parseD(fieldRetenues.getText())
+            );
+
+            boolean ok = salaireDAO.modifier(s);
+
+            if (ok) {
+                chargerSalaires();
+                viderFormulaire();
+                succes("✔ Salaire modifié avec succès.");
+            } else {
+                erreur("❌ Modification impossible.");
+            }
+
+        } catch (Exception ex) {
+            erreur("❌ Erreur : " + ex.getMessage());
+        }
+    }
+    
 }

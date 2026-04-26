@@ -40,7 +40,9 @@
         <HBox spacing="10" alignment="CENTER_LEFT">
             <Button text="➕ Ajouter"   onAction="#ajouterSalaire"   styleClass="button-success"/>
             <Button text="🗑 Supprimer" onAction="#supprimerSalaire" styleClass="button-danger"/>
+            <Button text="Modifier" onAction="#modifierSalaire" />
             <Button text="🔄 Vider"     onAction="#viderChamps"      styleClass="button-secondary"/>
+            
         </HBox>
 
         <Label fx:id="labelMessage" wrapText="true"/>

@@ -79,9 +79,13 @@ public class DashboardController {
         ObservableList<String[]> rows = FXCollections.observableArrayList();
         parDept.forEach((dept, emps) -> {
             double m = emps.stream().mapToDouble(Employe::getSalaireBase).sum();
-            rows.add(new String[]{ dept, String.valueOf(emps.size()), String.format("%.2f", m) });
-        });
+            rows.add(new String[]{
+            	    dept,
+            	    String.valueOf(emps.size()),
+            	    String.valueOf(m)
+            	}); });
         tableDepts.setItems(rows);
+        
     }
 
     @FXML private void nouvelEmploye(ActionEvent e)    { ouvrirPage("/view/employe.fxml"); }
