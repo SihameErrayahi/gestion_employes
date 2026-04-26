@@ -4,174 +4,205 @@ import dao.EmployeDAO;
 import dao.SalaireDAO;
 import model.Employe;
 import model.Salaire;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class SalaireController {
 
-    @FXML private ComboBox<Employe> employeCombo;
-    @FXML private TextField moisField;
-    @FXML private TextField salaireBaseField;
-    @FXML private TextField primesField;
-    @FXML private TextField retenuesField;
-    @FXML private TextField salaireNetField;
-    @FXML private TextField filtreField;
-    @FXML private Label     messageLabel;
-    @FXML private Label     totalLabel;
-
-    @FXML private TableView<Salaire>            salaireTable;
+    @FXML private TableView<Salaire>            tableSalaires;
     @FXML private TableColumn<Salaire, Integer> colId;
-    @FXML private TableColumn<Salaire, Integer> colEmploye;
+    @FXML private TableColumn<Salaire, String>  colEmployeNom;
     @FXML private TableColumn<Salaire, String>  colMois;
     @FXML private TableColumn<Salaire, Double>  colBase;
     @FXML private TableColumn<Salaire, Double>  colPrimes;
     @FXML private TableColumn<Salaire, Double>  colRetenues;
     @FXML private TableColumn<Salaire, Double>  colNet;
 
-    private SalaireDAO salaireDAO = new SalaireDAO();
-    private EmployeDAO employeDAO = new EmployeDAO();
-    private ObservableList<Salaire> listeSalaires = FXCollections.observableArrayList();
+    @FXML private ComboBox<Employe> comboEmploye;
+    @FXML private ComboBox<String>  comboFiltreEmploye;
+    @FXML private TextField         fieldMois;
+    @FXML private TextField         fieldBase;
+    @FXML private TextField         fieldPrimes;
+    @FXML private TextField         fieldRetenues;
+    @FXML private Label             labelNet;
+    @FXML private Label             labelMessage;
+    @FXML private Label             labelStats;
+
+    private final SalaireDAO salaireDAO = new SalaireDAO();
+    private final EmployeDAO employeDAO = new EmployeDAO();
+
+    private ObservableList<Salaire> listeSalaires;
+    private FilteredList<Salaire>   listeFiltree;
 
     @FXML
     public void initialize() {
-        employeCombo.setItems(FXCollections.observableArrayList(employeDAO.getTous()));
-
-        // Pré-remplir salaire de base selon l'employé sélectionné
-        employeCombo.getSelectionModel().selectedItemProperty().addListener((obs, o, newVal) -> {
-            if (newVal != null) {
-                salaireBaseField.setText(String.valueOf(newVal.getSalaireBase()));
-                calculerNet();
-            }
-        });
-
-        // Recalcul automatique
-        salaireBaseField.textProperty().addListener((obs, o, n) -> calculerNet());
-        primesField.textProperty().addListener((obs, o, n) -> calculerNet());
-        retenuesField.textProperty().addListener((obs, o, n) -> calculerNet());
 
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
-        colEmploye.setCellValueFactory(new PropertyValueFactory<>("employeId"));
+
+        colEmployeNom.setCellValueFactory(c -> {
+            Employe e = employeDAO.getParId(c.getValue().getEmployeId());
+            return new SimpleStringProperty(e != null ? e.getNomComplet() : "ID:" + c.getValue().getEmployeId());
+        });
+
         colMois.setCellValueFactory(new PropertyValueFactory<>("mois"));
         colBase.setCellValueFactory(new PropertyValueFactory<>("salaireBase"));
         colPrimes.setCellValueFactory(new PropertyValueFactory<>("primes"));
         colRetenues.setCellValueFactory(new PropertyValueFactory<>("retenues"));
         colNet.setCellValueFactory(new PropertyValueFactory<>("salaireNet"));
 
-        // Coloration du salaire net
-        colNet.setCellFactory(col -> new TableCell<Salaire, Double>() {
-            @Override
-            protected void updateItem(Double item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) { setText(null); setStyle(""); return; }
-                setText(String.format("%.2f DH", item));
-                setStyle("-fx-text-fill: #10B981; -fx-font-weight: bold;");
+        comboEmploye.setItems(FXCollections.observableArrayList(employeDAO.getTous()));
+
+        // Filtre employé
+        ObservableList<String> filtreOptions = FXCollections.observableArrayList("Tous les employés");
+        employeDAO.getTous().forEach(e -> filtreOptions.add(e.getNomComplet()));
+        comboFiltreEmploye.setItems(filtreOptions);
+        comboFiltreEmploye.setValue("Tous les employés");
+        comboFiltreEmploye.valueProperty().addListener((obs, a, b) -> filtrerParEmploye(b));
+
+        // Calcul net en temps réel
+        fieldBase.textProperty().addListener((o, a, b) -> calculerNet());
+        fieldPrimes.textProperty().addListener((o, a, b) -> calculerNet());
+        fieldRetenues.textProperty().addListener((o, a, b) -> calculerNet());
+
+        // Remplissage auto salaire de base depuis l'employé sélectionné
+        comboEmploye.valueProperty().addListener((obs, ancien, nouveau) -> {
+            if (nouveau != null && fieldBase.getText().isBlank()) {
+                fieldBase.setText(String.valueOf(nouveau.getSalaireBase()));
             }
         });
 
-        chargerDonnees();
+        listeSalaires = FXCollections.observableArrayList();
+        listeFiltree  = new FilteredList<>(listeSalaires, p -> true);
+        tableSalaires.setItems(listeFiltree);
+
+        tableSalaires.getSelectionModel().selectedItemProperty().addListener(
+            (obs, ancien, nouveau) -> remplirFormulaire(nouveau));
+
+        chargerSalaires();
     }
 
-    @FXML
-    public void calculerNet() {
+    private void chargerSalaires() {
+        listeSalaires.setAll(salaireDAO.getTous());
+        majStats();
+    }
+
+    private void majStats() {
+        double total = listeSalaires.stream().mapToDouble(Salaire::getSalaireNet).sum();
+        labelStats.setText("Nb fiches : " + listeSalaires.size() +
+            "  |  Total net : " + String.format("%,.0f DH", total));
+    }
+
+    private void calculerNet() {
         try {
-            double base     = parseDouble(salaireBaseField.getText());
-            double primes   = parseDouble(primesField.getText());
-            double retenues = parseDouble(retenuesField.getText());
-            salaireNetField.setText(String.format("%.2f DH", base + primes - retenues));
+            double base     = parseD(fieldBase.getText());
+            double primes   = parseD(fieldPrimes.getText());
+            double retenues = parseD(fieldRetenues.getText());
+            double net = base + primes - retenues;
+            labelNet.setText(String.format("%,.2f DH", net));
+            labelNet.setStyle("-fx-font-size:18px; -fx-font-weight:bold; "
+                + (net >= 0 ? "-fx-text-fill:#10B981;" : "-fx-text-fill:#EF4444;"));
         } catch (Exception e) {
-            salaireNetField.setText("—");
+            labelNet.setText("— DH");
         }
     }
 
-    @FXML
-    public void ajouterSalaire() {
-        if (employeCombo.getValue() == null || moisField.getText().trim().isEmpty()) {
-            afficherErreur("❌ Employé et mois sont obligatoires."); return;
+    private void filtrerParEmploye(String nomComplet) {
+        if (nomComplet == null || nomComplet.equals("Tous les employés")) {
+            listeFiltree.setPredicate(p -> true);
+        } else {
+            listeFiltree.setPredicate(s -> {
+                Employe e = employeDAO.getParId(s.getEmployeId());
+                return e != null && e.getNomComplet().equals(nomComplet);
+            });
         }
+    }
+
+    private void remplirFormulaire(Salaire s) {
+        if (s == null) return;
+        Employe e = employeDAO.getParId(s.getEmployeId());
+        comboEmploye.setValue(e);
+        fieldMois.setText(s.getMois());
+        fieldBase.setText(String.valueOf(s.getSalaireBase()));
+        fieldPrimes.setText(String.valueOf(s.getPrimes()));
+        fieldRetenues.setText(String.valueOf(s.getRetenues()));
+        labelMessage.setText("");
+    }
+
+    private void viderFormulaire() {
+        comboEmploye.getSelectionModel().clearSelection();
+        fieldMois.clear(); fieldBase.clear();
+        fieldPrimes.clear(); fieldRetenues.clear();
+        labelNet.setText("— DH");
+        tableSalaires.getSelectionModel().clearSelection();
+        labelMessage.setText("");
+    }
+
+    @FXML
+    private void ajouterSalaire() {
+        if (!valider()) return;
         try {
             Salaire s = new Salaire(0,
-                employeCombo.getValue().getId(),
-                moisField.getText().trim(),
-                parseDouble(salaireBaseField.getText()),
-                parseDouble(primesField.getText()),
-                parseDouble(retenuesField.getText()));
+                comboEmploye.getValue().getId(),
+                fieldMois.getText().trim(),
+                parseD(fieldBase.getText()),
+                parseD(fieldPrimes.getText()),
+                parseD(fieldRetenues.getText())
+            );
             salaireDAO.ajouter(s);
-            afficherSucces("✅ Salaire enregistré avec succès !");
-            annuler();
-            chargerDonnees();
-        } catch (NumberFormatException ex) {
-            afficherErreur("❌ Valeurs numériques invalides.");
+            chargerSalaires();
+            viderFormulaire();
+            succes("✔ Salaire ajouté avec succès.");
+        } catch (Exception ex) {
+            erreur("❌ Erreur : " + ex.getMessage());
         }
     }
 
     @FXML
-    public void chargerDonnees() {
-        List<Salaire> tous = salaireDAO.getTous();
-        listeSalaires.setAll(tous);
-        salaireTable.setItems(listeSalaires);
-        calculerTotal(tous);
-        messageLabel.setText("");
-    }
-
-    @FXML
-    public void filtrerParMois() {
-        String mois = filtreField.getText().trim();
-        if (mois.isEmpty()) { chargerDonnees(); return; }
-        List<Salaire> filtres = salaireDAO.getTous().stream()
-            .filter(s -> s.getMois().contains(mois))
-            .collect(Collectors.toList());
-        listeSalaires.setAll(filtres);
-        salaireTable.setItems(listeSalaires);
-        calculerTotal(filtres);
-    }
-
-    @FXML
-    public void supprimerSalaire() {
-        Salaire sel = salaireTable.getSelectionModel().getSelectedItem();
-        if (sel == null) { afficherErreur("❌ Sélectionnez un salaire à supprimer."); return; }
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmation");
-        confirm.setHeaderText("Supprimer ce salaire ?");
-        confirm.setContentText("Mois : " + sel.getMois() + " — Net : " + sel.getSalaireNet() + " DH");
-        confirm.showAndWait().ifPresent(res -> {
-            if (res == ButtonType.OK) {
+    private void supprimerSalaire() {
+        Salaire sel = tableSalaires.getSelectionModel().getSelectedItem();
+        if (sel == null) { erreur("⚠ Sélectionnez un salaire."); return; }
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+            "Supprimer ce salaire ?", ButtonType.YES, ButtonType.NO);
+        confirm.setHeaderText(null);
+        confirm.showAndWait().ifPresent(rep -> {
+            if (rep == ButtonType.YES) {
                 salaireDAO.supprimer(sel.getId());
-                afficherSucces("✅ Salaire supprimé.");
-                chargerDonnees();
+                chargerSalaires();
+                viderFormulaire();
+                succes("✔ Salaire supprimé.");
             }
         });
     }
 
-    @FXML
-    public void annuler() {
-        employeCombo.setValue(null);
-        moisField.clear(); salaireBaseField.clear();
-        primesField.clear(); retenuesField.clear(); salaireNetField.clear();
-        salaireTable.getSelectionModel().clearSelection();
+    @FXML private void viderChamps() { viderFormulaire(); }
+
+    private boolean valider() {
+        if (comboEmploye.getValue() == null)        { erreur("⚠ Sélectionnez un employé."); return false; }
+        if (fieldMois.getText().trim().isEmpty())    { erreur("⚠ Mois requis (yyyy-MM)."); return false; }
+        if (!fieldMois.getText().trim().matches("\\d{4}-\\d{2}")) {
+            erreur("⚠ Format mois invalide. Utilisez yyyy-MM (ex: 2025-03)"); return false;
+        }
+        if (fieldBase.getText().trim().isEmpty())    { erreur("⚠ Salaire de base requis."); return false; }
+        try { parseD(fieldBase.getText()); } catch (Exception ex) { erreur("⚠ Salaire base invalide."); return false; }
+        return true;
     }
 
-    private void calculerTotal(List<Salaire> liste) {
-        double total = liste.stream().mapToDouble(Salaire::getSalaireNet).sum();
-        totalLabel.setText(String.format("%.2f DH", total));
+    private double parseD(String s) {
+        if (s == null || s.trim().isEmpty()) return 0.0;
+        return Double.parseDouble(s.trim());
     }
 
-    private double parseDouble(String text) {
-        if (text == null || text.trim().isEmpty()) return 0.0;
-        return Double.parseDouble(text.trim());
+    private void succes(String msg) {
+        labelMessage.setStyle("-fx-text-fill: #10B981; -fx-font-weight: bold;");
+        labelMessage.setText(msg);
     }
-
-    private void afficherSucces(String msg) {
-        messageLabel.setStyle("-fx-text-fill: #10B981; -fx-font-size: 12px;");
-        messageLabel.setText(msg);
-    }
-    private void afficherErreur(String msg) {
-        messageLabel.setStyle("-fx-text-fill: #EF4444; -fx-font-size: 12px;");
-        messageLabel.setText(msg);
+    private void erreur(String msg) {
+        labelMessage.setStyle("-fx-text-fill: #EF4444;");
+        labelMessage.setText(msg);
     }
 }

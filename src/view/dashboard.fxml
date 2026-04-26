@@ -4,52 +4,78 @@
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox spacing="20" xmlns:fx="http://javafx.com/fxml"
+<VBox spacing="18" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controller.DashboardController"
       style="-fx-background-color: #F1F5F9;">
 
-    <padding>
-        <Insets top="25" right="25" bottom="25" left="25"/>
-    </padding>
+    <padding><Insets top="25" right="25" bottom="25" left="25"/></padding>
 
-    <Label text="📊 Dashboard RH" styleClass="label-title"/>
-    <Label text="Bienvenue dans votre espace de gestion" styleClass="label-subtitle"/>
+    <!-- TITRE -->
+    <VBox spacing="4">
+        <Label text="📊 Tableau de bord RH" styleClass="label-title"/>
+        <Label fx:id="labelDate" styleClass="label-subtitle"/>
+    </VBox>
 
-    <!-- Cartes statistiques -->
-    <HBox spacing="20">
+    <!-- CARTES STATISTIQUES -->
+    <HBox spacing="16">
+
         <VBox styleClass="card">
-            <Label text="👥 Total Employés"/>
-            <Label fx:id="totalEmployes" styleClass="card-number"/>
-            <Label text="+3 ce mois" style="-fx-text-fill: #10B981; -fx-font-size: 12px;"/>
+            <Label text="👥 Total Employés" styleClass="card-label"/>
+            <Label fx:id="totalEmployes" styleClass="card-number" text="—"/>
+            <Label fx:id="totalActifs" styleClass="card-sub"/>
         </VBox>
 
         <VBox styleClass="card">
-            <Label text="🌴 Congés en cours"/>
-            <Label text="5" styleClass="card-number"/>
-            <Label text="2 en attente" style="-fx-text-fill: #F59E0B; -fx-font-size: 12px;"/>
+            <Label text="🌴 Congés en attente" styleClass="card-label"/>
+            <Label fx:id="congesEnAttente" styleClass="card-number" text="—"
+                   style="-fx-text-fill: #F59E0B;"/>
+            <Label text="À traiter" styleClass="card-sub"/>
         </VBox>
 
         <VBox styleClass="card">
-            <Label text="💰 Masse salariale"/>
-            <Label text="142.5K" styleClass="card-number"/>
-            <Label text="DH ce mois" style="-fx-text-fill: #64748B; -fx-font-size: 12px;"/>
+            <Label text="💰 Masse salariale" styleClass="card-label"/>
+            <Label fx:id="masseSalariale" styleClass="card-number" text="—"/>
+            <Label text="DH (salaires de base)" styleClass="card-sub"/>
         </VBox>
 
         <VBox styleClass="card">
-            <Label text="⭐ Taux présence"/>
-            <Label text="94%" styleClass="card-number"/>
-            <Label text="+2% vs mois dernier" style="-fx-text-fill: #10B981; -fx-font-size: 12px;"/>
+            <Label text="📁 Départements" styleClass="card-label"/>
+            <Label fx:id="nbDepartements" styleClass="card-number" text="—"
+                   style="-fx-text-fill: #8B5CF6;"/>
+            <Label text="Unités actives" styleClass="card-sub"/>
         </VBox>
+
     </HBox>
 
-    <!-- Section rapide -->
-    <VBox spacing="15" style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 20;">
-        <Label text="⚡ Actions rapides" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #0F172A;"/>
-        
-        <HBox spacing="15">
-            <Button text="➕ Nouvel employé" styleClass="button-primary"/>
-            <Button text="📅 Nouveau congé" styleClass="button-secondary"/>
-            <Button text="💰 Générer salaires" styleClass="button-success"/>
+    <!-- ACTIONS RAPIDES -->
+    <VBox spacing="12"
+          style="-fx-background-color: white; -fx-background-radius: 14; -fx-padding: 20;
+                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 6, 0, 0, 2);">
+
+        <Label text="⚡ Actions rapides"
+               style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #0F172A;"/>
+
+        <HBox spacing="12">
+            <Button text="➕ Nouvel employé"  styleClass="button-success"  onAction="#nouvelEmploye"/>
+            <Button text="🌴 Nouveau congé"   styleClass="button-warning"  onAction="#nouveauConge"/>
+            <Button text="💰 Gérer salaires"  styleClass="button-primary"  onAction="#genererSalaires"/>
         </HBox>
+    </VBox>
+
+    <!-- RESUME DEPARTEMENTS -->
+    <VBox spacing="10"
+          style="-fx-background-color: white; -fx-background-radius: 14; -fx-padding: 20;
+                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 6, 0, 0, 2);">
+        <Label text="🏢 Répartition par département"
+               style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #0F172A;"/>
+        <TableView fx:id="tableDepts" prefHeight="180">
+            <columns>
+                <TableColumn fx:id="colDept"    text="Département"    prefWidth="250"/>
+                <TableColumn fx:id="colNbEmps"  text="Nb employés"    prefWidth="120"/>
+                <TableColumn fx:id="colMasseDept" text="Masse salariale (DH)" prefWidth="180"/>
+            </columns>
+            <placeholder><Label text="Aucune donnée"/></placeholder>
+        </TableView>
     </VBox>
 
 </VBox>

@@ -4,170 +4,270 @@ import dao.EmployeDAO;
 import model.Employe;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import javafx.beans.property.SimpleStringProperty;
+import java.time.LocalDate;
 
 public class EmployeController {
 
-    @FXML private TextField nomField;
-    @FXML private TextField prenomField;
-    @FXML private TextField emailField;
-    @FXML private TextField telephoneField;
-    @FXML private TextField posteField;
-    @FXML private TextField departementField;
-    @FXML private TextField dateEmbaucheField;
-    @FXML private TextField salaireBaseField;
-    @FXML private TextField rechercheField;
-    @FXML private Label messageLabel;
+    // ─── TABLE ──────────────────────────────────────────────────────────────
+    @FXML private TableView<Employe>               tableEmployes;
+    @FXML private TableColumn<Employe, Integer>    colId;
+    @FXML private TableColumn<Employe, String>     colNom;
+    @FXML private TableColumn<Employe, String>     colPrenom;
+    @FXML private TableColumn<Employe, String>     colPoste;
+    @FXML private TableColumn<Employe, String>     colDepartement;
+    @FXML private TableColumn<Employe, String>     colEmail;
+    @FXML private TableColumn<Employe, String>     colTelephone;
+    @FXML private TableColumn<Employe, String>     colDateEmbauche;
+    @FXML private TableColumn<Employe, Double>     colSalaireBase;
+    @FXML private TableColumn<Employe, String>     colStatut;
+    @FXML private TableColumn<Employe, String>     colAnciennete;
 
-    @FXML private TableView<Employe> employeTable;
-    @FXML private TableColumn<Employe, Integer> colId;
-    @FXML private TableColumn<Employe, String>  colNom;
-    @FXML private TableColumn<Employe, String>  colPrenom;
-    @FXML private TableColumn<Employe, String>  colEmail;
-    @FXML private TableColumn<Employe, String>  colTelephone;
-    @FXML private TableColumn<Employe, String>  colPoste;
-    @FXML private TableColumn<Employe, String>  colDepartement;
-    @FXML private TableColumn<Employe, Double>  colSalaire;
+    // ─── FORMULAIRE ─────────────────────────────────────────────────────────
+    @FXML private TextField    fieldNom;
+    @FXML private TextField    fieldPrenom;
+    @FXML private TextField    fieldEmail;
+    @FXML private TextField    fieldTelephone;
+    @FXML private TextField    fieldPoste;
+    @FXML private TextField    fieldDepartement;
+    @FXML private DatePicker   fieldDateEmbauche;
+    @FXML private TextField    fieldSalaireBase;
+    @FXML private TextField    fieldCin;
+    @FXML private TextField    fieldAdresse;
+    @FXML private ComboBox<Employe.Statut> comboStatut;
 
-    private EmployeDAO employeDAO = new EmployeDAO();
-    private ObservableList<Employe> listeEmployes = FXCollections.observableArrayList();
+    // ─── RECHERCHE & MESSAGES ───────────────────────────────────────────────
+    @FXML private TextField    fieldRecherche;
+    @FXML private Label        labelMessage;
+    @FXML private Label        labelNbEmployes;
 
+    private final EmployeDAO employeDAO = new EmployeDAO();
+    private ObservableList<Employe> listeEmployes;
+    private FilteredList<Employe>   listeFiltree;
+
+    // ════════════════════════ INIT ════════════════════════════════════════════
     @FXML
     public void initialize() {
+
+        // Colonnes
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colNom.setCellValueFactory(new PropertyValueFactory<>("nom"));
         colPrenom.setCellValueFactory(new PropertyValueFactory<>("prenom"));
-        colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
-        colTelephone.setCellValueFactory(new PropertyValueFactory<>("telephone"));
         colPoste.setCellValueFactory(new PropertyValueFactory<>("poste"));
         colDepartement.setCellValueFactory(new PropertyValueFactory<>("departement"));
-        colSalaire.setCellValueFactory(new PropertyValueFactory<>("salaireBase"));
+        colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
+        colTelephone.setCellValueFactory(new PropertyValueFactory<>("telephone"));
+        colDateEmbauche.setCellValueFactory(new PropertyValueFactory<>("dateEmbauche"));
+        colSalaireBase.setCellValueFactory(new PropertyValueFactory<>("salaireBase"));
 
-        employeTable.getSelectionModel().selectedItemProperty().addListener(
-            (obs, oldVal, newVal) -> { if (newVal != null) remplirFormulaire(newVal); }
-        );
+        // Colonne statut avec couleur
+        colStatut.setCellValueFactory(c ->
+            new SimpleStringProperty(c.getValue().getStatut().name()));
+        colStatut.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText(null); setStyle(""); return; }
+                setText(item);
+                switch (item) {
+                    case "ACTIF"    -> setStyle("-fx-text-fill: #10B981; -fx-font-weight: bold;");
+                    case "INACTIF"  -> setStyle("-fx-text-fill: #94A3B8;");
+                    case "SUSPENDU" -> setStyle("-fx-text-fill: #EF4444; -fx-font-weight: bold;");
+                    default         -> setStyle("");
+                }
+            }
+        });
 
-        chargerDonnees();
+        // Colonne ancienneté
+        colAnciennete.setCellValueFactory(c ->
+            new SimpleStringProperty(c.getValue().getAnciennete() + " ans"));
+
+        // ComboBox statut
+        comboStatut.setItems(FXCollections.observableArrayList(Employe.Statut.values()));
+        comboStatut.setValue(Employe.Statut.ACTIF);
+
+        // Data
+        listeEmployes = FXCollections.observableArrayList();
+        listeFiltree  = new FilteredList<>(listeEmployes, p -> true);
+        tableEmployes.setItems(listeFiltree);
+
+        // Recherche en temps réel
+        fieldRecherche.textProperty().addListener((obs, ancienne, nouvelle) -> filtrer(nouvelle));
+
+        // Sélection → remplir formulaire
+        tableEmployes.getSelectionModel().selectedItemProperty().addListener(
+            (obs, ancien, nouveau) -> remplirFormulaire(nouveau));
+
+        chargerEmployes();
     }
 
-    @FXML
-    public void chargerDonnees() {
+    // ════════════════════════ CHARGEMENT ══════════════════════════════════════
+    private void chargerEmployes() {
         listeEmployes.setAll(employeDAO.getTous());
-        employeTable.setItems(listeEmployes);
-        messageLabel.setText("");
+        majCompteur();
     }
 
-    @FXML
-    public void ajouterEmploye() {
-        if (!validerFormulaire()) return;
-        try {
-            Employe e = new Employe(0,
-                nomField.getText().trim(), prenomField.getText().trim(),
-                emailField.getText().trim(), telephoneField.getText().trim(),
-                posteField.getText().trim(), departementField.getText().trim(),
-                dateEmbaucheField.getText().trim(),
-                Double.parseDouble(salaireBaseField.getText().trim()));
-            employeDAO.ajouter(e);
-            afficherSucces("✅ Employé ajouté avec succès !");
-            annuler();
-            chargerDonnees();
-        } catch (NumberFormatException ex) {
-            afficherErreur("❌ Salaire invalide. Entrez un nombre.");
+    private void majCompteur() {
+        int total = listeEmployes.size();
+        long actifs = listeEmployes.stream()
+            .filter(e -> e.getStatut() == Employe.Statut.ACTIF).count();
+        labelNbEmployes.setText("Total : " + total + " employés  |  Actifs : " + actifs);
+    }
+
+    // ════════════════════════ FILTRAGE ════════════════════════════════════════
+    private void filtrer(String motCle) {
+        if (motCle == null || motCle.isBlank()) {
+            listeFiltree.setPredicate(p -> true);
+        } else {
+            String mc = motCle.toLowerCase();
+            listeFiltree.setPredicate(e ->
+                e.getNom().toLowerCase().contains(mc) ||
+                e.getPrenom().toLowerCase().contains(mc) ||
+                e.getPoste().toLowerCase().contains(mc) ||
+                e.getDepartement().toLowerCase().contains(mc) ||
+                e.getEmail().toLowerCase().contains(mc)
+            );
         }
     }
 
+    // ════════════════════════ AJOUTER ═════════════════════════════════════════
     @FXML
-    public void modifierEmploye() {
-        Employe sel = employeTable.getSelectionModel().getSelectedItem();
-        if (sel == null) { afficherErreur("❌ Sélectionnez un employé à modifier."); return; }
-        if (!validerFormulaire()) return;
+    private void ajouterEmploye() {
+        if (!validerChamps()) return;
         try {
-            sel.setNom(nomField.getText().trim());
-            sel.setPrenom(prenomField.getText().trim());
-            sel.setEmail(emailField.getText().trim());
-            sel.setTelephone(telephoneField.getText().trim());
-            sel.setPoste(posteField.getText().trim());
-            sel.setDepartement(departementField.getText().trim());
-            sel.setDateEmbauche(dateEmbaucheField.getText().trim());
-            sel.setSalaireBase(Double.parseDouble(salaireBaseField.getText().trim()));
-            employeDAO.modifier(sel);
-            afficherSucces("✅ Employé modifié avec succès !");
-            annuler();
-            chargerDonnees();
-        } catch (NumberFormatException ex) {
-            afficherErreur("❌ Salaire invalide. Entrez un nombre.");
+            Employe e = construireDepuisForm(0);
+            if (employeDAO.ajouter(e)) {
+                chargerEmployes();
+                viderChamps();
+                succes("✔ Employé ajouté avec succès.");
+            } else {
+                erreur("❌ Échec de l'ajout. Vérifiez la base de données.");
+            }
+        } catch (Exception ex) {
+            erreur("❌ Erreur : " + ex.getMessage());
         }
     }
 
+    // ════════════════════════ MODIFIER ════════════════════════════════════════
     @FXML
-    public void supprimerEmploye() {
-        Employe sel = employeTable.getSelectionModel().getSelectedItem();
-        if (sel == null) { afficherErreur("❌ Sélectionnez un employé à supprimer."); return; }
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmation");
-        confirm.setHeaderText("Supprimer l'employé ?");
-        confirm.setContentText("Supprimer " + sel.getPrenom() + " " + sel.getNom() + " ?");
-        confirm.showAndWait().ifPresent(res -> {
-            if (res == ButtonType.OK) {
-                employeDAO.supprimer(sel.getId());
-                afficherSucces("✅ Employé supprimé.");
-                chargerDonnees();
+    private void modifierEmploye() {
+        Employe selectionne = tableEmployes.getSelectionModel().getSelectedItem();
+        if (selectionne == null) { erreur("⚠ Sélectionnez un employé à modifier."); return; }
+        if (!validerChamps()) return;
+        try {
+            Employe e = construireDepuisForm(selectionne.getId());
+            if (employeDAO.modifier(e)) {
+                chargerEmployes();
+                succes("✔ Employé modifié avec succès.");
+            } else {
+                erreur("❌ Échec de la modification.");
+            }
+        } catch (Exception ex) {
+            erreur("❌ Erreur : " + ex.getMessage());
+        }
+    }
+
+    // ════════════════════════ SUPPRIMER ═══════════════════════════════════════
+    @FXML
+    private void supprimerEmploye() {
+        Employe selectionne = tableEmployes.getSelectionModel().getSelectedItem();
+        if (selectionne == null) { erreur("⚠ Sélectionnez un employé."); return; }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+            "Supprimer " + selectionne.getNomComplet() + " ?", ButtonType.YES, ButtonType.NO);
+        confirm.setTitle("Confirmation de suppression");
+        confirm.setHeaderText(null);
+        confirm.showAndWait().ifPresent(rep -> {
+            if (rep == ButtonType.YES) {
+                if (employeDAO.supprimer(selectionne.getId())) {
+                    chargerEmployes();
+                    viderChamps();
+                    succes("✔ Employé supprimé.");
+                } else {
+                    erreur("❌ Suppression impossible (peut-être lié à des salaires/congés).");
+                }
             }
         });
     }
 
-    @FXML
-    public void rechercherEmploye() {
-        String terme = rechercheField.getText().toLowerCase();
-        List<Employe> filtres = employeDAO.getTous().stream()
-            .filter(e -> e.getNom().toLowerCase().contains(terme)
-                      || e.getPrenom().toLowerCase().contains(terme)
-                      || e.getPoste().toLowerCase().contains(terme)
-                      || e.getEmail().toLowerCase().contains(terme))
-            .collect(Collectors.toList());
-        listeEmployes.setAll(filtres);
-        employeTable.setItems(listeEmployes);
-    }
-
-    @FXML
-    public void annuler() {
-        nomField.clear(); prenomField.clear(); emailField.clear();
-        telephoneField.clear(); posteField.clear(); departementField.clear();
-        dateEmbaucheField.clear(); salaireBaseField.clear();
-        employeTable.getSelectionModel().clearSelection();
+    // ════════════════════════ HELPERS FORMULAIRE ══════════════════════════════
+    private Employe construireDepuisForm(int id) {
+        return new Employe(
+            id,
+            fieldNom.getText().trim(),
+            fieldPrenom.getText().trim(),
+            fieldEmail.getText().trim(),
+            fieldTelephone.getText().trim(),
+            fieldPoste.getText().trim(),
+            fieldDepartement.getText().trim(),
+            fieldDateEmbauche.getValue().toString(),
+            Double.parseDouble(fieldSalaireBase.getText().trim()),
+            fieldCin.getText().trim(),
+            fieldAdresse.getText().trim(),
+            comboStatut.getValue()
+        );
     }
 
     private void remplirFormulaire(Employe e) {
-        nomField.setText(e.getNom());
-        prenomField.setText(e.getPrenom());
-        emailField.setText(e.getEmail());
-        telephoneField.setText(e.getTelephone());
-        posteField.setText(e.getPoste());
-        departementField.setText(e.getDepartement());
-        dateEmbaucheField.setText(e.getDateEmbauche());
-        salaireBaseField.setText(String.valueOf(e.getSalaireBase()));
+        if (e == null) return;
+        fieldNom.setText(e.getNom());
+        fieldPrenom.setText(e.getPrenom());
+        fieldEmail.setText(e.getEmail());
+        fieldTelephone.setText(e.getTelephone());
+        fieldPoste.setText(e.getPoste());
+        fieldDepartement.setText(e.getDepartement());
+        try { fieldDateEmbauche.setValue(LocalDate.parse(e.getDateEmbauche())); } catch (Exception ignored) {}
+        fieldSalaireBase.setText(String.valueOf(e.getSalaireBase()));
+        fieldCin.setText(e.getCin());
+        fieldAdresse.setText(e.getAdresse());
+        comboStatut.setValue(e.getStatut());
+        labelMessage.setText("");
     }
 
-    private boolean validerFormulaire() {
-        if (nomField.getText().trim().isEmpty() || prenomField.getText().trim().isEmpty()) {
-            afficherErreur("❌ Nom et Prénom sont obligatoires.");
-            return false;
+    @FXML
+    private void viderChamps() {
+        fieldNom.clear(); fieldPrenom.clear(); fieldEmail.clear();
+        fieldTelephone.clear(); fieldPoste.clear(); fieldDepartement.clear();
+        fieldDateEmbauche.setValue(null); fieldSalaireBase.clear();
+        fieldCin.clear(); fieldAdresse.clear();
+        comboStatut.setValue(Employe.Statut.ACTIF);
+        fieldRecherche.clear();
+        tableEmployes.getSelectionModel().clearSelection();
+        labelMessage.setText("");
+    }
+
+    // ════════════════════════ VALIDATION ══════════════════════════════════════
+    private boolean validerChamps() {
+        StringBuilder sb = new StringBuilder();
+        if (fieldNom.getText().trim().isEmpty())    sb.append("• Nom requis\n");
+        if (fieldPrenom.getText().trim().isEmpty()) sb.append("• Prénom requis\n");
+        if (fieldPoste.getText().trim().isEmpty())  sb.append("• Poste requis\n");
+        if (fieldDateEmbauche.getValue() == null)   sb.append("• Date d'embauche requise\n");
+        if (fieldSalaireBase.getText().trim().isEmpty()) {
+            sb.append("• Salaire base requis\n");
+        } else {
+            try { Double.parseDouble(fieldSalaireBase.getText().trim()); }
+            catch (NumberFormatException ex) { sb.append("• Salaire invalide (chiffres seulement)\n"); }
         }
+        if (!fieldEmail.getText().trim().isEmpty() &&
+            !fieldEmail.getText().contains("@")) {
+            sb.append("• Email invalide\n");
+        }
+        if (sb.length() > 0) { erreur("⚠ Erreurs :\n" + sb); return false; }
         return true;
     }
 
-    private void afficherSucces(String msg) {
-        messageLabel.setStyle("-fx-text-fill: #10B981; -fx-font-size: 12px;");
-        messageLabel.setText(msg);
+    // ════════════════════════ MESSAGES ════════════════════════════════════════
+    private void succes(String msg) {
+        labelMessage.setStyle("-fx-text-fill: #10B981; -fx-font-weight: bold;");
+        labelMessage.setText(msg);
     }
-
-    private void afficherErreur(String msg) {
-        messageLabel.setStyle("-fx-text-fill: #EF4444; -fx-font-size: 12px;");
-        messageLabel.setText(msg);
+    private void erreur(String msg) {
+        labelMessage.setStyle("-fx-text-fill: #EF4444;");
+        labelMessage.setText(msg);
     }
 }

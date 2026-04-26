@@ -36,36 +36,18 @@ public class LoginController {
         }
 
         try {
-            // *** REDIRECTION SELON LE RÔLE ***
-            if (utilisateur.isAdmin()) {
-                // L'admin va vers son interface dédiée
-                ouvrirInterface("/view/admin_main.fxml", utilisateur, "Administration — Gestion des Employés", 1100, 700);
-            } else {
-                // Le RH va vers l'interface RH existante
-                ouvrirInterface("/view/main.fxml", utilisateur, "Gestion des Employés", 1000, 650);
-            }
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/main.fxml"));
+            Parent root = loader.load();
 
+            MainController mainController = loader.getController();
+            mainController.setUtilisateur(utilisateur);
+
+            Stage stage = (Stage) loginField.getScene().getWindow();
+            stage.setScene(new Scene(root, 1000, 650));
+            stage.setTitle("Gestion des Employés");
+            stage.show();
         } catch (Exception e) {
             e.printStackTrace();
-            erreurLabel.setText("Erreur lors du chargement de l'interface.");
         }
-    }
-
-    private void ouvrirInterface(String fxmlPath, Utilisateur utilisateur, String titre, int largeur, int hauteur) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-        Parent root = loader.load();
-
-        // Passer l'utilisateur connecté au controller de la vue cible
-        Object controller = loader.getController();
-        if (controller instanceof AdminMainController) {
-            ((AdminMainController) controller).setAdmin(utilisateur);
-        } else if (controller instanceof MainController) {
-            ((MainController) controller).setUtilisateur(utilisateur);
-        }
-
-        Stage stage = (Stage) loginField.getScene().getWindow();
-        stage.setScene(new Scene(root, largeur, hauteur));
-        stage.setTitle(titre);
-        stage.show();
     }
 }
