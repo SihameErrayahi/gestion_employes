@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="15" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controller.AdminEmployesController"
+      style="-fx-background-color: #F1F5F9;">
+
+    <padding>
+        <Insets top="25" right="25" bottom="25" left="25"/>
+    </padding>
+
+    <Label text="🏢 Liste des Employés" styleClass="label-title"/>
+    <Label text="Consultation en lecture seule — les modifications se font par les RH"
+           styleClass="label-subtitle"/>
+
+    <!-- Barre de recherche -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <TextField fx:id="rechercheField" promptText="🔍 Rechercher par nom, prénom, poste, département..."
+                   HBox.hgrow="ALWAYS"
+                   style="-fx-background-radius: 6; -fx-padding: 9;"
+                   onKeyReleased="#rechercherEmploye"/>
+        <Button text="✖ Réinitialiser" onAction="#reinitialiserRecherche"
+                style="-fx-background-color: #ecf0f1; -fx-background-radius: 6; -fx-padding: 9 14; -fx-cursor: hand;"/>
+        <Label fx:id="totalLabel" text="Total : —"
+               style="-fx-font-size: 13px; -fx-text-fill: #3498db; -fx-font-weight: bold;"/>
+    </HBox>
+
+    <!-- Table employés -->
+    <TableView fx:id="tableEmployes" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colId"          text="ID"          prefWidth="45"/>
+            <TableColumn fx:id="colNom"         text="Nom"         prefWidth="110"/>
+            <TableColumn fx:id="colPrenom"      text="Prénom"      prefWidth="110"/>
+            <TableColumn fx:id="colPoste"       text="Poste"       prefWidth="150"/>
+            <TableColumn fx:id="colDepartement" text="Département" prefWidth="130"/>
+            <TableColumn fx:id="colEmail"       text="Email"       prefWidth="180"/>
+            <TableColumn fx:id="colTelephone"   text="Téléphone"   prefWidth="110"/>
+            <TableColumn fx:id="colDateEmbauche" text="Embauché le" prefWidth="100"/>
+            <TableColumn fx:id="colSalaireBase" text="Salaire base (DH)" prefWidth="130"/>
+        </columns>
+        <placeholder>
+            <Label text="Aucun employé trouvé."/>
+        </placeholder>
+    </TableView>
+
+    <!-- Détail de l'employé sélectionné -->
+    <VBox style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12;">
+        <Label text="📄 Détail employé sélectionné"
+               style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #475569;"/>
+        <Label fx:id="detailLabel" text="Cliquez sur un employé pour voir ses détails."
+               wrapText="true"
+               style="-fx-font-size: 12px; -fx-text-fill: #64748B;"/>
+    </VBox>
+
+</VBox>

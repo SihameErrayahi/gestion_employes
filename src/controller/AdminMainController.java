@@ -6,6 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -17,17 +18,15 @@ public class AdminMainController {
 
     private Utilisateur adminConnecte;
 
-    // Appelée par LoginController après chargement de la vue
     public void setAdmin(Utilisateur admin) {
         this.adminConnecte = admin;
         adminNomLabel.setText("👤 " + admin.getLogin() + " — Administrateur");
-        showAdminDashboard(); // Afficher le dashboard par défaut
+        showAdminDashboard();
     }
 
     @FXML
     public void initialize() {
-        // La vue est chargée mais setAdmin() n'a pas encore été appelée.
-        // Ne rien faire ici car adminConnecte est null à ce stade.
+        // adminConnecte est null ici, ne rien faire
     }
 
     // *** NAVIGATION ***
@@ -43,8 +42,12 @@ public class AdminMainController {
     }
 
     @FXML
+    public void showEmployes() {
+        chargerVue("/view/admin_employes.fxml");
+    }
+
+    @FXML
     public void showParametres() {
-        // Passer l'admin au controller des paramètres
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/admin_parametres.fxml"));
             Parent vue = loader.load();
@@ -58,8 +61,19 @@ public class AdminMainController {
         }
     }
 
+    // *** DÉCONNEXION AVEC CONFIRMATION ***
+
     @FXML
     public void seDeconnecter() {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Déconnexion");
+        confirm.setHeaderText("Confirmer la déconnexion");
+        confirm.setContentText("Êtes-vous sûr de vouloir vous déconnecter ?");
+
+        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+            return; // L'admin a annulé
+        }
+
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/view/login.fxml"));
             Stage stage = (Stage) adminContentArea.getScene().getWindow();
@@ -71,7 +85,7 @@ public class AdminMainController {
         }
     }
 
-    // *** MÉTHODE PRIVÉE : chargement de vue simple ***
+    // *** UTILITAIRES ***
 
     private void chargerVue(String fxmlPath) {
         try {

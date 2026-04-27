@@ -7,7 +7,6 @@ import java.util.List;
 
 public class UtilisateurDAO {
 
-    // Connexion / authentification
     public Utilisateur authentifier(String login, String motDePasse) {
         String sql = "SELECT * FROM utilisateur WHERE login = ? AND mot_de_passe = ?";
         try (Connection con = ConnexionDB.getConnection();
@@ -30,7 +29,6 @@ public class UtilisateurDAO {
         return null;
     }
 
-    // Créer un utilisateur RH (utilisé par l'admin)
     public boolean ajouter(Utilisateur u) {
         String sql = "INSERT INTO utilisateur (login, mot_de_passe, role, employe_id) VALUES (?, ?, ?, ?)";
         try (Connection con = ConnexionDB.getConnection();
@@ -47,7 +45,6 @@ public class UtilisateurDAO {
         }
     }
 
-    // Récupérer tous les utilisateurs RH (pas l'admin)
     public List<Utilisateur> getTousRH() {
         List<Utilisateur> liste = new ArrayList<>();
         String sql = "SELECT * FROM utilisateur WHERE role = 'RH'";
@@ -69,21 +66,52 @@ public class UtilisateurDAO {
         return liste;
     }
 
-    // Supprimer un utilisateur RH par ID
     public boolean supprimer(int id) {
         String sql = "DELETE FROM utilisateur WHERE id = ? AND role = 'RH'";
         try (Connection con = ConnexionDB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, id);
-            int rows = ps.executeUpdate();
-            return rows > 0;
+            return ps.executeUpdate() > 0;
         } catch (SQLException ex) {
             ex.printStackTrace();
             return false;
         }
     }
 
-    // Modifier le mot de passe d'un utilisateur (admin change son propre mdp)
+    // Modifier login et/ou mot de passe d'un RH
+    // Si nouveauMdp est null, on ne change pas le mot de passe
+    public boolean modifierRH(int id, String nouveauLogin, String nouveauMdp) {
+        String sql;
+        if (nouveauMdp != null && !nouveauMdp.isEmpty()) {
+            sql = "UPDATE utilisateur SET login = ?, mot_de_passe = ? WHERE id = ? AND role = 'RH'";
+        } else {
+            sql = "UPDATE utilisateur SET login = ? WHERE id = ? AND role = 'RH'";
+        }
+        try (Connection con = ConnexionDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nouveauLogin);
+            if (nouveauMdp != null && !nouveauMdp.isEmpty()) {
+                ps.setInt(2, id);
+                // 3e paramètre pas nécessaire, juste 2 params
+                PreparedStatement ps2 = con.prepareStatement(
+                    "UPDATE utilisateur SET login = ?, mot_de_passe = ? WHERE id = ? AND role = 'RH'");
+                ps2.setString(1, nouveauLogin);
+                ps2.setString(2, nouveauMdp);
+                ps2.setInt(3, id);
+                return ps2.executeUpdate() > 0;
+            } else {
+                PreparedStatement ps2 = con.prepareStatement(
+                    "UPDATE utilisateur SET login = ? WHERE id = ? AND role = 'RH'");
+                ps2.setString(1, nouveauLogin);
+                ps2.setInt(2, id);
+                return ps2.executeUpdate() > 0;
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
     public boolean modifierMotDePasse(int id, String ancienMdp, String nouveauMdp) {
         String sql = "UPDATE utilisateur SET mot_de_passe = ? WHERE id = ? AND mot_de_passe = ?";
         try (Connection con = ConnexionDB.getConnection();
@@ -91,15 +119,13 @@ public class UtilisateurDAO {
             ps.setString(1, nouveauMdp);
             ps.setInt(2, id);
             ps.setString(3, ancienMdp);
-            int rows = ps.executeUpdate();
-            return rows > 0;
+            return ps.executeUpdate() > 0;
         } catch (SQLException ex) {
             ex.printStackTrace();
             return false;
         }
     }
 
-    // Vérifier si un login existe déjà
     public boolean loginExiste(String login) {
         String sql = "SELECT COUNT(*) FROM utilisateur WHERE login = ?";
         try (Connection con = ConnexionDB.getConnection();
@@ -113,7 +139,6 @@ public class UtilisateurDAO {
         return false;
     }
 
-    // Compter le nombre total de RH
     public int compterRH() {
         String sql = "SELECT COUNT(*) FROM utilisateur WHERE role = 'RH'";
         try (Connection con = ConnexionDB.getConnection();

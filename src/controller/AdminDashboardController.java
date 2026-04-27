@@ -5,7 +5,10 @@ import dao.EmployeDAO;
 import dao.SalaireDAO;
 import dao.UtilisateurDAO;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
 
 public class AdminDashboardController {
 
@@ -14,10 +17,10 @@ public class AdminDashboardController {
     @FXML private Label totalCongesLabel;
     @FXML private Label masseSalarialeLabel;
 
-    private final EmployeDAO    employeDAO    = new EmployeDAO();
+    private final EmployeDAO     employeDAO     = new EmployeDAO();
     private final UtilisateurDAO utilisateurDAO = new UtilisateurDAO();
-    private final CongeDAO      congeDAO      = new CongeDAO();
-    private final SalaireDAO    salaireDAO    = new SalaireDAO();
+    private final CongeDAO       congeDAO       = new CongeDAO();
+    private final SalaireDAO     salaireDAO     = new SalaireDAO();
 
     @FXML
     public void initialize() {
@@ -25,36 +28,64 @@ public class AdminDashboardController {
     }
 
     private void chargerStatistiques() {
-        // Nombre total d'employés
         int nbEmployes = employeDAO.getTous().size();
-        if (totalEmployesLabel != null) totalEmployesLabel.setText(String.valueOf(nbEmployes));
+        if (totalEmployesLabel != null)
+            totalEmployesLabel.setText(String.valueOf(nbEmployes));
 
-        // Nombre de comptes RH actifs
         int nbRH = utilisateurDAO.compterRH();
-        if (totalRHLabel != null) totalRHLabel.setText(String.valueOf(nbRH));
+        if (totalRHLabel != null)
+            totalRHLabel.setText(String.valueOf(nbRH));
 
-        // Congés en cours (utiliser vos DAO existants)
         int nbConges = congeDAO.getTous().size();
-        if (totalCongesLabel != null) totalCongesLabel.setText(String.valueOf(nbConges));
+        if (totalCongesLabel != null)
+            totalCongesLabel.setText(String.valueOf(nbConges));
 
-        // Masse salariale (somme des salaires de base)
-        double masseSalariale = salaireDAO.getTous().stream()
-        	.mapToDouble(s -> s.getSalaireNet())
-            .sum();
-        if (masseSalarialeLabel != null) {
-            masseSalarialeLabel.setText(String.format("%.1fK", masseSalariale / 1000));
-        }
+        double masse = salaireDAO.getTous().stream()
+                .mapToDouble(s -> s.getSalaireNet())
+                .sum();
+        if (masseSalarialeLabel != null)
+            masseSalarialeLabel.setText(String.format("%.1fK", masse / 1000));
     }
 
-    // Actions rapides du dashboard (boutons)
+    // *** BOUTONS DASHBOARD — naviguent via le parent AdminMainController ***
+
     @FXML
     public void allerGestionRH() {
-        // Naviguer vers gestion RH via le parent AdminMainController
-        // Cette navigation est gérée par AdminMainController
+        naviguerVers("/view/gestion_rh.fxml");
+    }
+
+    @FXML
+    public void allerEmployes() {
+        naviguerVers("/view/admin_employes.fxml");
     }
 
     @FXML
     public void allerParametres() {
-        // Naviguer vers paramètres via le parent AdminMainController
+        // Paramètres nécessite l'objet admin — on passe par AdminMainController
+        try {
+            StackPane contentArea = (StackPane) totalEmployesLabel.getScene()
+                    .lookup("#adminContentArea");
+            if (contentArea != null) {
+                Parent vue = FXMLLoader.load(getClass().getResource("/view/admin_parametres.fxml"));
+                contentArea.getChildren().clear();
+                contentArea.getChildren().add(vue);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void naviguerVers(String fxmlPath) {
+        try {
+            Parent vue = FXMLLoader.load(getClass().getResource(fxmlPath));
+            StackPane contentArea = (StackPane) totalEmployesLabel.getScene()
+                    .lookup("#adminContentArea");
+            if (contentArea != null) {
+                contentArea.getChildren().clear();
+                contentArea.getChildren().add(vue);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

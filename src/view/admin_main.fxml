@@ -7,14 +7,12 @@
             xmlns:fx="http://javafx.com/fxml"
             stylesheets="@style.css">
 
-    <!-- HEADER -->
     <top>
         <HBox styleClass="header">
             <Label text="🛡️ Administration — Gestion des Employés" styleClass="title"/>
         </HBox>
     </top>
 
-    <!-- SIDEBAR ADMIN -->
     <left>
         <VBox spacing="15" styleClass="sidebar">
 
@@ -23,28 +21,31 @@
 
             <Separator style="-fx-background-color: #3a4a5c;"/>
 
-            <Button text="📊 Dashboard Admin"
+            <Button text="📊 Dashboard"
                     onAction="#showAdminDashboard"
-                    styleClass="btn-dashboard"/>
+                    styleClass="btn-dashboard" maxWidth="Infinity"/>
 
             <Button text="👥 Gestion des RH"
                     onAction="#showGestionRH"
-                    styleClass="btn-employe"/>
+                    styleClass="btn-employe" maxWidth="Infinity"/>
+
+            <Button text="🏢 Voir les Employés"
+                    onAction="#showEmployes"
+                    styleClass="btn-salaire" maxWidth="Infinity"/>
 
             <Button text="⚙️ Paramètres"
                     onAction="#showParametres"
-                    styleClass="btn-salaire"/>
+                    styleClass="btn-conge" maxWidth="Infinity"/>
 
             <Separator style="-fx-background-color: #3a4a5c;"/>
 
             <Button text="🚪 Déconnexion"
                     onAction="#seDeconnecter"
-                    styleClass="btn-logout"/>
+                    styleClass="btn-logout" maxWidth="Infinity"/>
 
         </VBox>
     </left>
 
-    <!-- ZONE CONTENU PRINCIPAL -->
     <center>
         <StackPane fx:id="adminContentArea" styleClass="content-area"/>
     </center>
