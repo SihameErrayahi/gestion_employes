@@ -4,7 +4,6 @@ config.properties
 .settings/
 *.jar 
 .classpath
-.project
 .settings/
 bin/
 target/
