@@ -4,12 +4,12 @@
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox spacing="20" xmlns:fx="http://javafx.com/fxml"
+<VBox spacing="15" xmlns:fx="http://javafx.com/fxml"
       fx:controller="controller.AdminRHController"
       style="-fx-background-color: #F1F5F9;">
 
     <padding>
-        <Insets top="25" right="25" bottom="25" left="25"/>
+        <Insets top="20" right="20" bottom="20" left="20"/>
     </padding>
 
     <Label text="👥 Gestion des Comptes RH" styleClass="label-title"/>
@@ -21,58 +21,75 @@
                style="-fx-font-size: 13px; -fx-text-fill: #7f8c8d;"/>
     </HBox>
 
-    <HBox spacing="20">
+    <Label fx:id="messageLabel" text="" wrapText="true"
+           style="-fx-font-size: 13px;" minHeight="18"/>
 
-        <!-- COLONNE GAUCHE : Créer + Modifier -->
-        <VBox spacing="15" prefWidth="320">
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
 
-            <!-- Créer un RH -->
-            <VBox spacing="10" style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 18;">
-                <Label text="➕ Créer un compte RH"
-                       style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #0F172A;"/>
-                <Label text="Employé éligible :" style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
-                <ComboBox fx:id="comboEmploye" maxWidth="Infinity" promptText="— Sélectionner un employé —"/>
-                <Label text="Login :" style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
-                <TextField fx:id="loginField" promptText="Nom d'utilisateur"
-                           style="-fx-background-radius: 6; -fx-padding: 8;"/>
-                <Label text="Mot de passe :" style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
-                <PasswordField fx:id="passwordField" promptText="Min. 6 caractères"
+        <!-- COLONNE GAUCHE dans ScrollPane pour eviter que les elements soient coupes -->
+        <ScrollPane fitToWidth="true" prefWidth="330" minWidth="310"
+                    hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+                    style="-fx-background: transparent; -fx-background-color: transparent;">
+
+            <VBox spacing="12" style="-fx-background-color: transparent;">
+                <padding>
+                    <Insets top="2" right="4" bottom="4" left="2"/>
+                </padding>
+
+                <!-- Creer un RH -->
+                <VBox spacing="8" style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 15;">
+                    <Label text="Plus Creer un compte RH"
+                           style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #0F172A;"/>
+                    <Label text="Employe eligible :"
+                           style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
+                    <ComboBox fx:id="comboEmploye" maxWidth="Infinity"
+                              promptText="Selectionner un employe"/>
+                    <Label text="Login :"
+                           style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
+                    <TextField fx:id="loginField" promptText="Nom d'utilisateur"
                                style="-fx-background-radius: 6; -fx-padding: 8;"/>
-                <Label text="Confirmer :" style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
-                <PasswordField fx:id="confirmPasswordField" promptText="Répéter le mot de passe"
+                    <Label text="Mot de passe :"
+                           style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
+                    <PasswordField fx:id="passwordField" promptText="Min. 6 caracteres"
+                                   style="-fx-background-radius: 6; -fx-padding: 8;"/>
+                    <Label text="Confirmer :"
+                           style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
+                    <PasswordField fx:id="confirmPasswordField" promptText="Repeter le mot de passe"
+                                   style="-fx-background-radius: 6; -fx-padding: 8;"/>
+                    <Button text="Creer le compte RH" onAction="#creerRH"
+                            maxWidth="Infinity"
+                            style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 10; -fx-cursor: hand; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <!-- Modifier un RH selectionne -->
+                <VBox spacing="8" style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 15;">
+                    <Label text="Modifier le RH selectionne"
+                           style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #0F172A;"/>
+                    <Label text="Cliquez d'abord sur un RH dans la table"
+                           style="-fx-text-fill: #7f8c8d; -fx-font-size: 11px;"/>
+                    <Label text="Nouveau login :"
+                           style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
+                    <TextField fx:id="modifLoginField" promptText="Nouveau login"
                                style="-fx-background-radius: 6; -fx-padding: 8;"/>
-                <Button text="✅ Créer le compte RH" onAction="#creerRH" maxWidth="Infinity"
-                        style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 10; -fx-cursor: hand;"/>
+                    <Label text="Nouveau mot de passe :"
+                           style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
+                    <PasswordField fx:id="modifPasswordField"
+                                   promptText="Laisser vide = ne pas changer"
+                                   style="-fx-background-radius: 6; -fx-padding: 8;"/>
+                    <Button text="Enregistrer les modifications" onAction="#modifierRH"
+                            maxWidth="Infinity"
+                            style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 10; -fx-cursor: hand; -fx-font-size: 13px;"/>
+                </VBox>
+
             </VBox>
-
-            <!-- Modifier un RH sélectionné -->
-            <VBox spacing="10" style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 18;">
-                <Label text="✏️ Modifier le RH sélectionné"
-                       style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #0F172A;"/>
-                <Label text="(Cliquez d'abord sur un RH dans la table)"
-                       style="-fx-text-fill: #7f8c8d; -fx-font-size: 11px;"/>
-                <Label text="Nouveau login :" style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
-                <TextField fx:id="modifLoginField" promptText="Nouveau login"
-                           style="-fx-background-radius: 6; -fx-padding: 8;"/>
-                <Label text="Nouveau mot de passe :" style="-fx-text-fill: #475569; -fx-font-size: 12px;"/>
-                <PasswordField fx:id="modifPasswordField" promptText="Laisser vide = ne pas changer"
-                               style="-fx-background-radius: 6; -fx-padding: 8;"/>
-                <Button text="💾 Enregistrer les modifications" onAction="#modifierRH" maxWidth="Infinity"
-                        style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 10; -fx-cursor: hand;"/>
-            </VBox>
-
-            <!-- Message -->
-            <Label fx:id="messageLabel" text="" wrapText="true"
-                   style="-fx-font-size: 13px;"/>
-
-        </VBox>
+        </ScrollPane>
 
         <!-- COLONNE DROITE : Table RH -->
         <VBox spacing="10" HBox.hgrow="ALWAYS">
             <HBox spacing="10" alignment="CENTER_LEFT">
-                <Label text="📋 Comptes RH existants"
+                <Label text="Comptes RH existants"
                        style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #0F172A;"/>
-                <Button text="🔄 Actualiser" onAction="#rafraichir"
+                <Button text="Actualiser" onAction="#rafraichir"
                         style="-fx-background-color: #ecf0f1; -fx-background-radius: 6; -fx-padding: 6 12; -fx-cursor: hand;"/>
             </HBox>
 
@@ -80,17 +97,16 @@
                 <columns>
                     <TableColumn fx:id="colId"        text="ID"         prefWidth="45"/>
                     <TableColumn fx:id="colLogin"     text="Login"      prefWidth="160"/>
-                    <TableColumn fx:id="colRole"      text="Rôle"       prefWidth="90"/>
-                    <TableColumn fx:id="colEmployeId" text="ID Employé" prefWidth="100"/>
+                    <TableColumn fx:id="colRole"      text="Role"       prefWidth="90"/>
+                    <TableColumn fx:id="colEmployeId" text="ID Employe" prefWidth="100"/>
                 </columns>
                 <placeholder>
-                    <Label text="Aucun compte RH trouvé."/>
+                    <Label text="Aucun compte RH trouve."/>
                 </placeholder>
             </TableView>
 
-            <Button text="🗑️ Supprimer le RH sélectionné" onAction="#supprimerRH"
-                    style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 10 20; -fx-cursor: hand;"/>
-
+            <Button text="Supprimer le RH selectionne" onAction="#supprimerRH"
+                    style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 10 20; -fx-cursor: hand; -fx-font-size: 13px;"/>
         </VBox>
 
     </HBox>
