@@ -2,4 +2,9 @@ config.properties
 /bin/
 *.class
 .settings/
-*.jar
+*.jar 
+.classpath
+.project
+.settings/
+bin/
+target/
