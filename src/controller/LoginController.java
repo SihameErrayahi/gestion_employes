@@ -36,15 +36,31 @@ public class LoginController {
         }
 
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/main.fxml"));
-            Parent root = loader.load();
-
-            MainController mainController = loader.getController();
-            mainController.setUtilisateur(utilisateur);
-
             Stage stage = (Stage) loginField.getScene().getWindow();
-            stage.setScene(new Scene(root, 1000, 650));
-            stage.setTitle("Gestion des Employés");
+
+            if (utilisateur.isResponsable()) {
+                // ── Interface Administrateur ──
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/admin_main.fxml"));
+                Parent root = loader.load();
+
+                AdminMainController adminController = loader.getController();
+                adminController.setAdmin(utilisateur);
+
+                stage.setScene(new Scene(root, 1100, 700));
+                stage.setTitle("Administration – Gestion des Employés");
+
+            } else {
+                // ── Interface RH / Responsable ──
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/main.fxml"));
+                Parent root = loader.load();
+
+                MainController mainController = loader.getController();
+                mainController.setUtilisateur(utilisateur);
+
+                stage.setScene(new Scene(root, 1000, 650));
+                stage.setTitle("Gestion des Employés");
+            }
+
             stage.show();
         } catch (Exception e) {
             e.printStackTrace();

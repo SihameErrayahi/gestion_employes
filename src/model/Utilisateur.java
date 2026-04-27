@@ -30,9 +30,8 @@ public class Utilisateur {
     public void setMotDePasse(String motDePasse) { this.motDePasse = motDePasse; }
     public void setRole(Role role) { this.role = role; }
 
-    public boolean isAdmin() {
-        return this.role == Role.ADMIN;
-    }
+    
+    
 
     public boolean isResponsable() {
         return this.role == Role.RESPONSABLE;
