@@ -285,7 +285,7 @@ public class SalaireController {
             if (ok) {
                 chargerSalaires();
                 viderFormulaire();
-                succes("✔ Salaire modifié avec succès.");
+                succes("✔ Salaire modifié avec succes.");
             } else {
                 erreur("❌ Modification impossible.");
             }
