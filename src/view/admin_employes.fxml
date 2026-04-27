@@ -48,7 +48,7 @@
 
     <!-- Détail de l'employé sélectionné -->
     <VBox style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12;">
-        <Label text="📄 Détail employé sélectionné"
+        <Label text="📄 Détail employe sélectionné"
                style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #475569;"/>
         <Label fx:id="detailLabel" text="Cliquez sur un employé pour voir ses détails."
                wrapText="true"
