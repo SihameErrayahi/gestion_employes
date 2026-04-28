@@ -121,6 +121,56 @@ public class EmployeDAO {
         return liste;
     }
 
+    // ─── VÉRIFICATION DOUBLONS ──────────────────────────────────────────────
+
+    /**
+     * Vérifie si un email existe déjà (pour un autre employé que celui identifié par excludeId).
+     * Pour un ajout, passer excludeId = 0.
+     */
+    public boolean emailExiste(String email, int excludeId) {
+        String sql = "SELECT COUNT(*) FROM employe WHERE LOWER(email) = LOWER(?) AND id != ?";
+        try (Connection con = ConnexionDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, email.trim());
+            ps.setInt(2, excludeId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt(1) > 0;
+        } catch (Exception ex) { ex.printStackTrace(); }
+        return false;
+    }
+
+    /**
+     * Vérifie si un CIN existe déjà (pour un autre employé que celui identifié par excludeId).
+     */
+    public boolean cinExiste(String cin, int excludeId) {
+        if (cin == null || cin.trim().isEmpty()) return false;
+        String sql = "SELECT COUNT(*) FROM employe WHERE LOWER(cin) = LOWER(?) AND id != ?";
+        try (Connection con = ConnexionDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, cin.trim());
+            ps.setInt(2, excludeId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt(1) > 0;
+        } catch (Exception ex) { ex.printStackTrace(); }
+        return false;
+    }
+
+    /**
+     * Vérifie si un téléphone existe déjà (pour un autre employé que celui identifié par excludeId).
+     */
+    public boolean telephoneExiste(String telephone, int excludeId) {
+        if (telephone == null || telephone.trim().isEmpty()) return false;
+        String sql = "SELECT COUNT(*) FROM employe WHERE telephone = ? AND id != ?";
+        try (Connection con = ConnexionDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, telephone.trim());
+            ps.setInt(2, excludeId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt(1) > 0;
+        } catch (Exception ex) { ex.printStackTrace(); }
+        return false;
+    }
+
     // ─── STATISTIQUES ───────────────────────────────────────────────────────
     public int compterParDepartement(String dept) {
         String sql = "SELECT COUNT(*) FROM employe WHERE departement = ?";
