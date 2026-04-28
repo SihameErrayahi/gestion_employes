@@ -41,9 +41,16 @@ public class EmployeController {
     @FXML private TextField    fieldAdresse;
     @FXML private ComboBox<Employe.Statut> comboStatut;
 
+    // ─── LABELS D'ERREUR PAR CHAMP ──────────────────────────────────────────
+    @FXML private Label errNom;
+    @FXML private Label errPrenom;
+    @FXML private Label errEmail;
+    @FXML private Label errTelephone;
+    @FXML private Label errAdresse;
+
     // ─── RECHERCHE & MESSAGES ───────────────────────────────────────────────
     @FXML private TextField    fieldRecherche;
-    @FXML private Label        labelMessage;
+    @FXML private TextArea     labelMessage;
     @FXML private Label        labelNbEmployes;
 
     private final EmployeService employeService = new EmployeService();
@@ -54,7 +61,7 @@ public class EmployeController {
     @FXML
     public void initialize() {
 
-        // Colonnes
+        // ── Colonnes table ───────────────────────────────────────────────────
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colNom.setCellValueFactory(new PropertyValueFactory<>("nom"));
         colPrenom.setCellValueFactory(new PropertyValueFactory<>("prenom"));
@@ -65,7 +72,6 @@ public class EmployeController {
         colDateEmbauche.setCellValueFactory(new PropertyValueFactory<>("dateEmbauche"));
         colSalaireBase.setCellValueFactory(new PropertyValueFactory<>("salaireBase"));
 
-        // Colonne statut avec couleur
         colStatut.setCellValueFactory(c ->
             new SimpleStringProperty(c.getValue().getStatut().name()));
         colStatut.setCellFactory(col -> new TableCell<>() {
@@ -83,27 +89,209 @@ public class EmployeController {
             }
         });
 
-        // Colonne ancienneté
         colAnciennete.setCellValueFactory(c ->
             new SimpleStringProperty(c.getValue().getAnciennete() + " ans"));
 
-        // ComboBox statut
+        // ── ComboBox statut ──────────────────────────────────────────────────
         comboStatut.setItems(FXCollections.observableArrayList(Employe.Statut.values()));
         comboStatut.setValue(Employe.Statut.ACTIF);
 
-        // Data
+        // ── Data ─────────────────────────────────────────────────────────────
         listeEmployes = FXCollections.observableArrayList();
         listeFiltree  = new FilteredList<>(listeEmployes, p -> true);
         tableEmployes.setItems(listeFiltree);
 
-        // Recherche en temps réel
-        fieldRecherche.textProperty().addListener((obs, ancienne, nouvelle) -> filtrer(nouvelle));
-
-        // Sélection → remplir formulaire
+        fieldRecherche.textProperty().addListener((obs, a, n) -> filtrer(n));
         tableEmployes.getSelectionModel().selectedItemProperty().addListener(
             (obs, ancien, nouveau) -> remplirFormulaire(nouveau));
 
+        // ── Validation en temps réel ─────────────────────────────────────────
+        configurerValidationChampsSequentiels();
+
         chargerEmployes();
+    }
+
+    // ════════════════════════ VALIDATION TEMPS RÉEL ═══════════════════════════
+
+    /**
+     * Configure la chaîne de validation : chaque champ n'est activé que si
+     * le champ précédent est valide. Les erreurs s'affichent sous chaque champ.
+     *
+     * Ordre : Nom → Prénom → Email → Téléphone → Poste → Département
+     *       → DateEmbauche → SalaireBase → CIN → Adresse → Statut
+     */
+    private void configurerValidationChampsSequentiels() {
+
+        // ── NOM : lettres uniquement, min 2 caractères ────────────────────────
+        fieldNom.textProperty().addListener((obs, ancien, nouveau) -> {
+            String val = nouveau.trim();
+            if (val.isEmpty()) {
+                setErreur(errNom, "");
+                desactiverDepuis(fieldPrenom);
+            } else if (!val.matches("[\\p{L}\\s'\\-]+")) {
+                setErreur(errNom, "⚠ Uniquement des lettres (pas de chiffres ni symboles).");
+                desactiverDepuis(fieldPrenom);
+            } else if (val.length() < 2) {
+                setErreur(errNom, "⚠ Minimum 2 caractères.");
+                desactiverDepuis(fieldPrenom);
+            } else {
+                setSucces(errNom);
+                fieldPrenom.setDisable(false);
+                // re-déclencher la validation du prénom pour propager la chaîne
+                revaliderPrenom();
+            }
+        });
+
+        // ── PRÉNOM : lettres uniquement, min 2 caractères ────────────────────
+        fieldPrenom.textProperty().addListener((obs, ancien, nouveau) -> {
+            revaliderPrenom();
+        });
+
+        // ── EMAIL : doit contenir @ + lettres/chiffres ────────────────────────
+        fieldEmail.textProperty().addListener((obs, ancien, nouveau) -> {
+            revaliderEmail();
+        });
+
+        // ── TÉLÉPHONE : commence par 06, exactement 10 chiffres ──────────────
+        fieldTelephone.textProperty().addListener((obs, ancien, nouveau) -> {
+            revaliderTelephone();
+        });
+
+        // ── ADRESSE : doit contenir lettres ET chiffres ───────────────────────
+        fieldAdresse.textProperty().addListener((obs, ancien, nouveau) -> {
+            revaliderAdresse();
+        });
+    }
+
+    /** Valide le prénom et active/désactive la suite. */
+    private void revaliderPrenom() {
+        if (fieldPrenom.isDisable()) return;
+        String val = fieldPrenom.getText().trim();
+        if (val.isEmpty()) {
+            setErreur(errPrenom, "");
+            desactiverDepuis(fieldEmail);
+        } else if (!val.matches("[\\p{L}\\s'\\-]+")) {
+            setErreur(errPrenom, "⚠ Uniquement des lettres (pas de chiffres ni symboles).");
+            desactiverDepuis(fieldEmail);
+        } else if (val.length() < 2) {
+            setErreur(errPrenom, "⚠ Minimum 2 caractères.");
+            desactiverDepuis(fieldEmail);
+        } else {
+            setSucces(errPrenom);
+            fieldEmail.setDisable(false);
+            revaliderEmail();
+        }
+    }
+
+    /** Valide l'email et active/désactive la suite. */
+    private void revaliderEmail() {
+        if (fieldEmail.isDisable()) return;
+        String val = fieldEmail.getText().trim();
+        if (val.isEmpty()) {
+            setErreur(errEmail, "");
+            desactiverDepuis(fieldTelephone);
+        } else if (!val.contains("@")) {
+            setErreur(errEmail, "⚠ L'email doit contenir un '@'.");
+            desactiverDepuis(fieldTelephone);
+        } else if (!val.matches("^[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$")) {
+            setErreur(errEmail, "⚠ Format invalide (ex: nom@domaine.com).");
+            desactiverDepuis(fieldTelephone);
+        } else {
+            setSucces(errEmail);
+            fieldTelephone.setDisable(false);
+            revaliderTelephone();
+        }
+    }
+
+    /** Valide le téléphone et active/désactive la suite. */
+    private void revaliderTelephone() {
+        if (fieldTelephone.isDisable()) return;
+        String val = fieldTelephone.getText().trim();
+        if (val.isEmpty()) {
+            setErreur(errTelephone, "");
+            desactiverDepuis(fieldPoste);
+        } else if (!val.matches("\\d+")) {
+            setErreur(errTelephone, "⚠ Uniquement des chiffres.");
+            desactiverDepuis(fieldPoste);
+        } else if (!val.startsWith("06")) {
+            setErreur(errTelephone, "⚠ Doit commencer par 06.");
+            desactiverDepuis(fieldPoste);
+        } else if (val.length() != 10) {
+            setErreur(errTelephone, "⚠ Doit contenir exactement 10 chiffres (actuellement : " + val.length() + ").");
+            desactiverDepuis(fieldPoste);
+        } else {
+            setSucces(errTelephone);
+            // Activer tous les champs restants
+            fieldPoste.setDisable(false);
+            fieldDepartement.setDisable(false);
+            fieldDateEmbauche.setDisable(false);
+            fieldSalaireBase.setDisable(false);
+            fieldCin.setDisable(false);
+            fieldAdresse.setDisable(false);
+            comboStatut.setDisable(false);
+        }
+    }
+
+    /** Valide l'adresse (doit contenir lettres ET chiffres). */
+    private void revaliderAdresse() {
+        if (fieldAdresse.isDisable()) return;
+        String val = fieldAdresse.getText().trim();
+        if (val.isEmpty()) {
+            setErreur(errAdresse, "");
+        } else if (!val.matches(".*[\\p{L}].*") || !val.matches(".*\\d.*")) {
+            setErreur(errAdresse, "⚠ L'adresse doit contenir des lettres ET des chiffres (ex: 12 Rue Hassan).");
+        } else {
+            setSucces(errAdresse);
+        }
+    }
+
+    /**
+     * Désactive tous les champs à partir du champ donné dans la chaîne.
+     * Chaîne : Prénom → Email → Téléphone → Poste → Département
+     *        → DateEmbauche → SalaireBase → CIN → Adresse → Statut
+     */
+    private void desactiverDepuis(javafx.scene.control.Control depuis) {
+        boolean desactiver = false;
+        javafx.scene.control.Control[] chaine = {
+            fieldPrenom, fieldEmail, fieldTelephone,
+            fieldPoste, fieldDepartement, fieldDateEmbauche,
+            fieldSalaireBase, fieldCin, fieldAdresse, comboStatut
+        };
+        for (javafx.scene.control.Control c : chaine) {
+            if (c == depuis) desactiver = true;
+            if (desactiver) {
+                c.setDisable(true);
+                // Vider le texte si c'est un TextField
+                if (c instanceof TextField tf) tf.clear();
+                if (c instanceof DatePicker dp) dp.setValue(null);
+            }
+        }
+        // Effacer les messages d'erreur des champs désactivés
+        if (depuis == fieldPrenom || depuis == fieldEmail ||
+            depuis == fieldTelephone || depuis == fieldAdresse) {
+            effacerErreursApres(depuis);
+        }
+    }
+
+    private void effacerErreursApres(javafx.scene.control.Control depuis) {
+        Label[] labels = { errPrenom, errEmail, errTelephone, errAdresse };
+        javafx.scene.control.Control[] champs = { fieldPrenom, fieldEmail, fieldTelephone, fieldAdresse };
+        boolean effacer = false;
+        for (int i = 0; i < champs.length; i++) {
+            if (champs[i] == depuis) effacer = true;
+            if (effacer) labels[i].setText("");
+        }
+    }
+
+    // ─── Helpers style erreur/succès ─────────────────────────────────────────
+    private void setErreur(Label label, String msg) {
+        label.setText(msg);
+        label.setStyle("-fx-text-fill: #EF4444; -fx-font-size: 11px;");
+    }
+
+    private void setSucces(Label label) {
+        label.setText("✔");
+        label.setStyle("-fx-text-fill: #10B981; -fx-font-size: 11px; -fx-font-weight: bold;");
     }
 
     // ════════════════════════ CHARGEMENT ══════════════════════════════════════
@@ -139,7 +327,7 @@ public class EmployeController {
     @FXML
     private void ajouterEmploye() {
         Employe e = construireDepuisForm(0);
-        if (e == null) return; // erreur de parsing (salaire non numérique)
+        if (e == null) return;
 
         ResultatService resultat = employeService.ajouterEmploye(e);
         if (resultat.succes) {
@@ -161,7 +349,7 @@ public class EmployeController {
         }
 
         Employe e = construireDepuisForm(selectionne.getId());
-        if (e == null) return; // erreur de parsing
+        if (e == null) return;
 
         ResultatService resultat = employeService.modifierEmploye(e);
         if (resultat.succes) {
@@ -201,11 +389,6 @@ public class EmployeController {
     }
 
     // ════════════════════════ HELPERS FORMULAIRE ══════════════════════════════
-
-    /**
-     * Construit un objet Employe depuis les champs du formulaire.
-     * Retourne null si le salaire n'est pas un nombre valide (affiche une erreur).
-     */
     private Employe construireDepuisForm(int id) {
         double salaire = 0;
         String salaireText = fieldSalaireBase.getText().trim();
@@ -234,8 +417,25 @@ public class EmployeController {
         );
     }
 
+    /**
+     * Remplit le formulaire depuis un employé sélectionné dans la table.
+     * Active tous les champs pour permettre la modification.
+     */
     private void remplirFormulaire(Employe e) {
         if (e == null) return;
+
+        // Activer tous les champs avant de remplir
+        fieldPrenom.setDisable(false);
+        fieldEmail.setDisable(false);
+        fieldTelephone.setDisable(false);
+        fieldPoste.setDisable(false);
+        fieldDepartement.setDisable(false);
+        fieldDateEmbauche.setDisable(false);
+        fieldSalaireBase.setDisable(false);
+        fieldCin.setDisable(false);
+        fieldAdresse.setDisable(false);
+        comboStatut.setDisable(false);
+
         fieldNom.setText(e.getNom());
         fieldPrenom.setText(e.getPrenom());
         fieldEmail.setText(e.getEmail());
@@ -248,11 +448,21 @@ public class EmployeController {
         fieldCin.setText(e.getCin());
         fieldAdresse.setText(e.getAdresse());
         comboStatut.setValue(e.getStatut());
+
+        // Afficher ✔ sur tous les champs déjà remplis
+        setSucces(errNom);
+        setSucces(errPrenom);
+        setSucces(errEmail);
+        setSucces(errTelephone);
+        setSucces(errAdresse);
+
         labelMessage.setText("");
+        labelMessage.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
     }
 
     @FXML
     private void viderChamps() {
+        // Vider tous les champs
         fieldNom.clear();
         fieldPrenom.clear();
         fieldEmail.clear();
@@ -266,17 +476,40 @@ public class EmployeController {
         comboStatut.setValue(Employe.Statut.ACTIF);
         fieldRecherche.clear();
         tableEmployes.getSelectionModel().clearSelection();
+
+        // Remettre la chaîne : tout désactiver sauf Nom
+        fieldPrenom.setDisable(true);
+        fieldEmail.setDisable(true);
+        fieldTelephone.setDisable(true);
+        fieldPoste.setDisable(true);
+        fieldDepartement.setDisable(true);
+        fieldDateEmbauche.setDisable(true);
+        fieldSalaireBase.setDisable(true);
+        fieldCin.setDisable(true);
+        fieldAdresse.setDisable(true);
+        comboStatut.setDisable(true);
+
+        // Vider les labels d'erreur
+        errNom.setText("");
+        errPrenom.setText("");
+        errEmail.setText("");
+        errTelephone.setText("");
+        errAdresse.setText("");
+
         labelMessage.setText("");
+        labelMessage.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
     }
 
-    // ════════════════════════ MESSAGES ════════════════════════════════════════
+    // ════════════════════════ MESSAGES GLOBAUX ════════════════════════════════
     private void succes(String msg) {
-        labelMessage.setStyle("-fx-text-fill: #10B981; -fx-font-weight: bold;");
+        labelMessage.setStyle("-fx-text-fill: #10B981; -fx-font-weight: bold; "
+            + "-fx-background-color: transparent; -fx-border-color: transparent; -fx-font-size: 13px;");
         labelMessage.setText(msg);
     }
 
     private void erreur(String msg) {
-        labelMessage.setStyle("-fx-text-fill: #EF4444;");
+        labelMessage.setStyle("-fx-text-fill: #EF4444; "
+            + "-fx-background-color: transparent; -fx-border-color: transparent; -fx-font-size: 13px;");
         labelMessage.setText(msg);
     }
 }
