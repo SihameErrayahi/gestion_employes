@@ -2,13 +2,28 @@ package model;
 
 public class Conge {
 
-    public enum Statut { EN_ATTENTE, APPROUVE, REFUSE }
-    public enum Type { ANNUEL, MALADIE, MATERNITE, SANS_SOLDE }
+	public enum Statut {
+	    EN_ATTENTE, APPROUVE, REFUSE, PASSE
+	}
+
+    public enum Type {
+        ANNUEL,
+        MALADIE,
+        MATERNITE,
+        PATERNITE,
+        SANS_SOLDE,
+        VACANCE,        
+        MARIAGE,
+        DECES,
+        FORMATION,
+        EXCEPTIONNEL,
+        RECUPERATION
+    }
 
     private int id;
     private int employeId;
-    private String dateDebut;   // format : "yyyy-MM-dd"
-    private String dateFin;     // format : "yyyy-MM-dd"
+    private String dateDebut;
+    private String dateFin;
     private int nombreJours;
     private Type type;
     private Statut statut;
@@ -37,10 +52,4 @@ public class Conge {
 
     public void setStatut(Statut statut) { this.statut = statut; }
     public void setMotif(String motif) { this.motif = motif; }
-
-    @Override
-    public String toString() {
-        return "Congé [" + type + "] Employé#" + employeId +
-               " du " + dateDebut + " au " + dateFin + " - " + statut;
-    }
 }
