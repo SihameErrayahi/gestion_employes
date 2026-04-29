@@ -55,7 +55,7 @@
         <!-- Ligne 2 : Poste + Département + Date embauche + Salaire -->
         <HBox spacing="10">
             <TextField fx:id="fieldPoste"         promptText="Poste *"          prefWidth="160" disable="true"/>
-            <TextField fx:id="fieldDepartement"   promptText="Département *"    prefWidth="160" disable="true"/>
+            <ComboBox fx:id="comboDepartement"    promptText="Département *"    prefWidth="160" disable="true"/>
             <DatePicker fx:id="fieldDateEmbauche" promptText="Date embauche *"  prefWidth="175" disable="true"/>
             <TextField fx:id="fieldSalaireBase"   promptText="Salaire base *"   prefWidth="135" disable="true"/>
         </HBox>

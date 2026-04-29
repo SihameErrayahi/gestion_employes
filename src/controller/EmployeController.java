@@ -1,5 +1,5 @@
 package controller;
-
+ 
 import model.Employe;
 import service.EmployeService;
 import service.EmployeService.ResultatService;
@@ -11,9 +11,9 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.beans.property.SimpleStringProperty;
 import java.time.LocalDate;
-
+ 
 public class EmployeController {
-
+ 
     // ─── TABLE ──────────────────────────────────────────────────────────────
     @FXML private TableView<Employe>               tableEmployes;
     @FXML private TableColumn<Employe, Integer>    colId;
@@ -27,40 +27,40 @@ public class EmployeController {
     @FXML private TableColumn<Employe, Double>     colSalaireBase;
     @FXML private TableColumn<Employe, String>     colStatut;
     @FXML private TableColumn<Employe, String>     colAnciennete;
-
+ 
     // ─── FORMULAIRE ─────────────────────────────────────────────────────────
     @FXML private TextField    fieldNom;
     @FXML private TextField    fieldPrenom;
     @FXML private TextField    fieldEmail;
     @FXML private TextField    fieldTelephone;
     @FXML private TextField    fieldPoste;
-    @FXML private TextField    fieldDepartement;
+    @FXML private ComboBox<String> comboDepartement;
     @FXML private DatePicker   fieldDateEmbauche;
     @FXML private TextField    fieldSalaireBase;
     @FXML private TextField    fieldCin;
     @FXML private TextField    fieldAdresse;
     @FXML private ComboBox<Employe.Statut> comboStatut;
-
+ 
     // ─── LABELS D'ERREUR PAR CHAMP ──────────────────────────────────────────
     @FXML private Label errNom;
     @FXML private Label errPrenom;
     @FXML private Label errEmail;
     @FXML private Label errTelephone;
     @FXML private Label errAdresse;
-
+ 
     // ─── RECHERCHE & MESSAGES ───────────────────────────────────────────────
     @FXML private TextField    fieldRecherche;
     @FXML private TextArea     labelMessage;
     @FXML private Label        labelNbEmployes;
-
+ 
     private final EmployeService employeService = new EmployeService();
     private ObservableList<Employe> listeEmployes;
     private FilteredList<Employe>   listeFiltree;
-
+ 
     // ════════════════════════ INIT ════════════════════════════════════════════
     @FXML
     public void initialize() {
-
+ 
         // ── Colonnes table ───────────────────────────────────────────────────
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colNom.setCellValueFactory(new PropertyValueFactory<>("nom"));
@@ -71,7 +71,7 @@ public class EmployeController {
         colTelephone.setCellValueFactory(new PropertyValueFactory<>("telephone"));
         colDateEmbauche.setCellValueFactory(new PropertyValueFactory<>("dateEmbauche"));
         colSalaireBase.setCellValueFactory(new PropertyValueFactory<>("salaireBase"));
-
+ 
         colStatut.setCellValueFactory(c ->
             new SimpleStringProperty(c.getValue().getStatut().name()));
         colStatut.setCellFactory(col -> new TableCell<>() {
@@ -88,31 +88,36 @@ public class EmployeController {
                 }
             }
         });
-
+ 
         colAnciennete.setCellValueFactory(c ->
             new SimpleStringProperty(c.getValue().getAnciennete() + " ans"));
-
+ 
         // ── ComboBox statut ──────────────────────────────────────────────────
         comboStatut.setItems(FXCollections.observableArrayList(Employe.Statut.values()));
         comboStatut.setValue(Employe.Statut.ACTIF);
-
+ 
+        // ── ComboBox département (4 choix fixes) ─────────────────────────────
+        comboDepartement.setItems(FXCollections.observableArrayList(
+            "Informatique", "Réseau", "Management", "Électrique"
+        ));
+ 
         // ── Data ─────────────────────────────────────────────────────────────
         listeEmployes = FXCollections.observableArrayList();
         listeFiltree  = new FilteredList<>(listeEmployes, p -> true);
         tableEmployes.setItems(listeFiltree);
-
+ 
         fieldRecherche.textProperty().addListener((obs, a, n) -> filtrer(n));
         tableEmployes.getSelectionModel().selectedItemProperty().addListener(
             (obs, ancien, nouveau) -> remplirFormulaire(nouveau));
-
+ 
         // ── Validation en temps réel ─────────────────────────────────────────
         configurerValidationChampsSequentiels();
-
+ 
         chargerEmployes();
     }
-
+ 
     // ════════════════════════ VALIDATION TEMPS RÉEL ═══════════════════════════
-
+ 
     /**
      * Configure la chaîne de validation : chaque champ n'est activé que si
      * le champ précédent est valide. Les erreurs s'affichent sous chaque champ.
@@ -121,7 +126,7 @@ public class EmployeController {
      *       → DateEmbauche → SalaireBase → CIN → Adresse → Statut
      */
     private void configurerValidationChampsSequentiels() {
-
+ 
         // ── NOM : lettres uniquement, min 2 caractères ────────────────────────
         fieldNom.textProperty().addListener((obs, ancien, nouveau) -> {
             String val = nouveau.trim();
@@ -141,28 +146,28 @@ public class EmployeController {
                 revaliderPrenom();
             }
         });
-
+ 
         // ── PRÉNOM : lettres uniquement, min 2 caractères ────────────────────
         fieldPrenom.textProperty().addListener((obs, ancien, nouveau) -> {
             revaliderPrenom();
         });
-
+ 
         // ── EMAIL : doit contenir @ + lettres/chiffres ────────────────────────
         fieldEmail.textProperty().addListener((obs, ancien, nouveau) -> {
             revaliderEmail();
         });
-
+ 
         // ── TÉLÉPHONE : commence par 06, exactement 10 chiffres ──────────────
         fieldTelephone.textProperty().addListener((obs, ancien, nouveau) -> {
             revaliderTelephone();
         });
-
+ 
         // ── ADRESSE : doit contenir lettres ET chiffres ───────────────────────
         fieldAdresse.textProperty().addListener((obs, ancien, nouveau) -> {
             revaliderAdresse();
         });
     }
-
+ 
     /** Valide le prénom et active/désactive la suite. */
     private void revaliderPrenom() {
         if (fieldPrenom.isDisable()) return;
@@ -182,7 +187,7 @@ public class EmployeController {
             revaliderEmail();
         }
     }
-
+ 
     /** Valide l'email et active/désactive la suite. */
     private void revaliderEmail() {
         if (fieldEmail.isDisable()) return;
@@ -202,7 +207,7 @@ public class EmployeController {
             revaliderTelephone();
         }
     }
-
+ 
     /** Valide le téléphone et active/désactive la suite. */
     private void revaliderTelephone() {
         if (fieldTelephone.isDisable()) return;
@@ -223,7 +228,7 @@ public class EmployeController {
             setSucces(errTelephone);
             // Activer tous les champs restants
             fieldPoste.setDisable(false);
-            fieldDepartement.setDisable(false);
+            comboDepartement.setDisable(false);
             fieldDateEmbauche.setDisable(false);
             fieldSalaireBase.setDisable(false);
             fieldCin.setDisable(false);
@@ -231,7 +236,7 @@ public class EmployeController {
             comboStatut.setDisable(false);
         }
     }
-
+ 
     /** Valide l'adresse (doit contenir lettres ET chiffres). */
     private void revaliderAdresse() {
         if (fieldAdresse.isDisable()) return;
@@ -244,7 +249,7 @@ public class EmployeController {
             setSucces(errAdresse);
         }
     }
-
+ 
     /**
      * Désactive tous les champs à partir du champ donné dans la chaîne.
      * Chaîne : Prénom → Email → Téléphone → Poste → Département
@@ -254,7 +259,7 @@ public class EmployeController {
         boolean desactiver = false;
         javafx.scene.control.Control[] chaine = {
             fieldPrenom, fieldEmail, fieldTelephone,
-            fieldPoste, fieldDepartement, fieldDateEmbauche,
+            fieldPoste, comboDepartement, fieldDateEmbauche,
             fieldSalaireBase, fieldCin, fieldAdresse, comboStatut
         };
         for (javafx.scene.control.Control c : chaine) {
@@ -272,7 +277,7 @@ public class EmployeController {
             effacerErreursApres(depuis);
         }
     }
-
+ 
     private void effacerErreursApres(javafx.scene.control.Control depuis) {
         Label[] labels = { errPrenom, errEmail, errTelephone, errAdresse };
         javafx.scene.control.Control[] champs = { fieldPrenom, fieldEmail, fieldTelephone, fieldAdresse };
@@ -282,31 +287,31 @@ public class EmployeController {
             if (effacer) labels[i].setText("");
         }
     }
-
+ 
     // ─── Helpers style erreur/succès ─────────────────────────────────────────
     private void setErreur(Label label, String msg) {
         label.setText(msg);
         label.setStyle("-fx-text-fill: #EF4444; -fx-font-size: 11px;");
     }
-
+ 
     private void setSucces(Label label) {
         label.setText("✔");
         label.setStyle("-fx-text-fill: #10B981; -fx-font-size: 11px; -fx-font-weight: bold;");
     }
-
+ 
     // ════════════════════════ CHARGEMENT ══════════════════════════════════════
     private void chargerEmployes() {
         listeEmployes.setAll(employeService.getTousLesEmployes());
         majCompteur();
     }
-
+ 
     private void majCompteur() {
         int total = listeEmployes.size();
         long actifs = listeEmployes.stream()
             .filter(e -> e.getStatut() == Employe.Statut.ACTIF).count();
         labelNbEmployes.setText("Total : " + total + " employés  |  Actifs : " + actifs);
     }
-
+ 
     // ════════════════════════ FILTRAGE ════════════════════════════════════════
     private void filtrer(String motCle) {
         if (motCle == null || motCle.isBlank()) {
@@ -322,13 +327,13 @@ public class EmployeController {
             );
         }
     }
-
+ 
     // ════════════════════════ AJOUTER ═════════════════════════════════════════
     @FXML
     private void ajouterEmploye() {
         Employe e = construireDepuisForm(0);
         if (e == null) return;
-
+ 
         ResultatService resultat = employeService.ajouterEmploye(e);
         if (resultat.succes) {
             chargerEmployes();
@@ -338,7 +343,7 @@ public class EmployeController {
             erreur(resultat.message);
         }
     }
-
+ 
     // ════════════════════════ MODIFIER ════════════════════════════════════════
     @FXML
     private void modifierEmploye() {
@@ -347,10 +352,10 @@ public class EmployeController {
             erreur("⚠ Veuillez sélectionner un employé à modifier.");
             return;
         }
-
+ 
         Employe e = construireDepuisForm(selectionne.getId());
         if (e == null) return;
-
+ 
         ResultatService resultat = employeService.modifierEmploye(e);
         if (resultat.succes) {
             chargerEmployes();
@@ -359,7 +364,7 @@ public class EmployeController {
             erreur(resultat.message);
         }
     }
-
+ 
     // ════════════════════════ SUPPRIMER ═══════════════════════════════════════
     @FXML
     private void supprimerEmploye() {
@@ -368,7 +373,7 @@ public class EmployeController {
             erreur("⚠ Veuillez sélectionner un employé à supprimer.");
             return;
         }
-
+ 
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
             "Confirmer la suppression de " + selectionne.getNomComplet() + " ?",
             ButtonType.YES, ButtonType.NO);
@@ -387,7 +392,7 @@ public class EmployeController {
             }
         });
     }
-
+ 
     // ════════════════════════ HELPERS FORMULAIRE ══════════════════════════════
     private Employe construireDepuisForm(int id) {
         double salaire = 0;
@@ -400,7 +405,7 @@ public class EmployeController {
                 return null;
             }
         }
-
+ 
         return new Employe(
             id,
             fieldNom.getText().trim(),
@@ -408,7 +413,7 @@ public class EmployeController {
             fieldEmail.getText().trim(),
             fieldTelephone.getText().trim(),
             fieldPoste.getText().trim(),
-            fieldDepartement.getText().trim(),
+            comboDepartement.getValue() != null ? comboDepartement.getValue() : "",
             fieldDateEmbauche.getValue() != null ? fieldDateEmbauche.getValue().toString() : "",
             salaire,
             fieldCin.getText().trim(),
@@ -416,50 +421,50 @@ public class EmployeController {
             comboStatut.getValue() != null ? comboStatut.getValue() : Employe.Statut.ACTIF
         );
     }
-
+ 
     /**
      * Remplit le formulaire depuis un employé sélectionné dans la table.
      * Active tous les champs pour permettre la modification.
      */
     private void remplirFormulaire(Employe e) {
         if (e == null) return;
-
+ 
         // Activer tous les champs avant de remplir
         fieldPrenom.setDisable(false);
         fieldEmail.setDisable(false);
         fieldTelephone.setDisable(false);
         fieldPoste.setDisable(false);
-        fieldDepartement.setDisable(false);
+        comboDepartement.setDisable(false);
         fieldDateEmbauche.setDisable(false);
         fieldSalaireBase.setDisable(false);
         fieldCin.setDisable(false);
         fieldAdresse.setDisable(false);
         comboStatut.setDisable(false);
-
+ 
         fieldNom.setText(e.getNom());
         fieldPrenom.setText(e.getPrenom());
         fieldEmail.setText(e.getEmail());
         fieldTelephone.setText(e.getTelephone());
         fieldPoste.setText(e.getPoste());
-        fieldDepartement.setText(e.getDepartement());
+        comboDepartement.setValue(e.getDepartement());
         try { fieldDateEmbauche.setValue(LocalDate.parse(e.getDateEmbauche())); }
         catch (Exception ignored) { fieldDateEmbauche.setValue(null); }
         fieldSalaireBase.setText(String.valueOf(e.getSalaireBase()));
         fieldCin.setText(e.getCin());
         fieldAdresse.setText(e.getAdresse());
         comboStatut.setValue(e.getStatut());
-
+ 
         // Afficher ✔ sur tous les champs déjà remplis
         setSucces(errNom);
         setSucces(errPrenom);
         setSucces(errEmail);
         setSucces(errTelephone);
         setSucces(errAdresse);
-
+ 
         labelMessage.setText("");
         labelMessage.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
     }
-
+ 
     @FXML
     private void viderChamps() {
         // Vider tous les champs
@@ -468,7 +473,8 @@ public class EmployeController {
         fieldEmail.clear();
         fieldTelephone.clear();
         fieldPoste.clear();
-        fieldDepartement.clear();
+        comboDepartement.getSelectionModel().clearSelection();
+        comboDepartement.setValue(null);
         fieldDateEmbauche.setValue(null);
         fieldSalaireBase.clear();
         fieldCin.clear();
@@ -476,37 +482,37 @@ public class EmployeController {
         comboStatut.setValue(Employe.Statut.ACTIF);
         fieldRecherche.clear();
         tableEmployes.getSelectionModel().clearSelection();
-
+ 
         // Remettre la chaîne : tout désactiver sauf Nom
         fieldPrenom.setDisable(true);
         fieldEmail.setDisable(true);
         fieldTelephone.setDisable(true);
         fieldPoste.setDisable(true);
-        fieldDepartement.setDisable(true);
+        comboDepartement.setDisable(true);
         fieldDateEmbauche.setDisable(true);
         fieldSalaireBase.setDisable(true);
         fieldCin.setDisable(true);
         fieldAdresse.setDisable(true);
         comboStatut.setDisable(true);
-
+ 
         // Vider les labels d'erreur
         errNom.setText("");
         errPrenom.setText("");
         errEmail.setText("");
         errTelephone.setText("");
         errAdresse.setText("");
-
+ 
         labelMessage.setText("");
         labelMessage.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
     }
-
+ 
     // ════════════════════════ MESSAGES GLOBAUX ════════════════════════════════
     private void succes(String msg) {
         labelMessage.setStyle("-fx-text-fill: #10B981; -fx-font-weight: bold; "
             + "-fx-background-color: transparent; -fx-border-color: transparent; -fx-font-size: 13px;");
         labelMessage.setText(msg);
     }
-
+ 
     private void erreur(String msg) {
         labelMessage.setStyle("-fx-text-fill: #EF4444; "
             + "-fx-background-color: transparent; -fx-border-color: transparent; -fx-font-size: 13px;");
