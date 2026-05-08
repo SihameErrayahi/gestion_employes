@@ -31,22 +31,4 @@ public class CongeService {
     public void supprimerConge(int id) {
         congeDAO.supprimer(id);
     }
-
-    public long getNombreCongesEnAttente() {
-        return congeDAO.getTous().stream()
-            .filter(c -> c.getStatut() == Conge.Statut.EN_ATTENTE)
-            .count();
-    }
-
-    public long getNombreCongesAcceptes() {
-        return congeDAO.getTous().stream()
-            .filter(c -> c.getStatut() == Conge.Statut.APPROUVE)
-            .count();
-    }
-
-    public long getNombreCongesRefuses() {
-        return congeDAO.getTous().stream()
-            .filter(c -> c.getStatut() == Conge.Statut.REFUSE)
-            .count();
-    }
 }

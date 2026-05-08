@@ -2,22 +2,18 @@ package model;
 
 public class Conge {
 
-	public enum Statut {
-	    EN_ATTENTE, APPROUVE, REFUSE, PASSE
-	}
+    public enum Statut {
+        EN_ATTENTE,
+        APPROUVE,
+        REFUSE,
+        PASSE
+    }
 
     public enum Type {
         ANNUEL,
-        MALADIE,
         MATERNITE,
-        PATERNITE,
-        SANS_SOLDE,
-        VACANCE,        
-        MARIAGE,
-        DECES,
-        FORMATION,
-        EXCEPTIONNEL,
-        RECUPERATION
+        MALADIE,
+        SANS_SOLDE
     }
 
     private int id;

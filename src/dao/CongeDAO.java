@@ -171,4 +171,44 @@ public class CongeDAO {
             ex.printStackTrace();
         }
     }
+    public int getJoursPrisAnnuel(int employeId, int annee) {
+
+        String sql = "SELECT SUM(nombre_jours) FROM conge " +
+                     "WHERE employe_id=? AND type='ANNUEL' " +
+                     "AND YEAR(date_debut)=? AND statut!='REFUSE'";
+
+        try (Connection con = ConnexionDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, employeId);
+            ps.setInt(2, annee);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt(1);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    public int getJoursPrisMaternite(int employeId, int annee) {
+
+        String sql = "SELECT SUM(nombre_jours) FROM conge " +
+                     "WHERE employe_id=? AND type='MATERNITE' " +
+                     "AND YEAR(date_debut)=?";
+
+        try (Connection con = ConnexionDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, employeId);
+            ps.setInt(2, annee);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt(1);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 }

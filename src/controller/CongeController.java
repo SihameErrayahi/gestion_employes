@@ -215,6 +215,8 @@ public class CongeController {
             }
         });
         chargerConges();
+        
+        
     }
 
     private void configurerDatePicker(DatePicker datePicker) {
@@ -421,19 +423,54 @@ public class CongeController {
 
     @FXML
     private void enregistrerConge() {
+
         if (!valider()) return;
 
         int employeId = comboEmploye.getValue().getId();
+        int annee = fieldDateDebut.getValue().getYear();
 
-        if (congeDAO.existeCongePourEmploye(employeId, 0)) {
-            erreur("⚠ Cette personne a déjà pris sa vacance. Impossible d'ajouter un deuxième congé.");
-            return;
+        if (comboType.getValue() == Conge.Type.ANNUEL) {
+
+            boolean aMaternite = congeDAO.getTous().stream()
+                    .anyMatch(conge ->
+                            conge.getEmployeId() == employeId &&
+                            conge.getType() == Conge.Type.MATERNITE &&
+                            LocalDate.parse(conge.getDateDebut()).getYear() == annee
+                    );
+
+            if (aMaternite) {
+                erreur("⚠ Impossible : congé annuel non autorisé car maternité déjà prise cette année.");
+                return;
+            }
         }
-
         LocalDate debut = fieldDateDebut.getValue();
         LocalDate fin = fieldDateFin.getValue();
 
-        int jours = (int) ChronoUnit.DAYS.between(debut, fin) + 1;
+        int jours = (int) java.time.temporal.ChronoUnit.DAYS.between(debut, fin) + 1;
+
+        
+
+        // 🔥 CONGÉ ANNUEL (30 jours)
+        if (comboType.getValue() == Conge.Type.ANNUEL) {
+
+            int dejaPris = congeDAO.getJoursPrisAnnuel(employeId, annee);
+
+            if (dejaPris + jours > 30) {
+                erreur("⚠ Limite 30 jours de congé annuel atteinte.");
+                return;
+            }
+        }
+
+        // 🔥 MATERNITÉ (90 jours)
+        if (comboType.getValue() == Conge.Type.MATERNITE) {
+
+            int dejaPris = congeDAO.getJoursPrisMaternite(employeId, annee);
+
+            if (dejaPris + jours > 90) {
+                erreur("⚠ Limite 90 jours de congé maternité atteinte.");
+                return;
+            }
+        }
 
         Conge c = new Conge(
                 0,
@@ -448,9 +485,10 @@ public class CongeController {
         congeDAO.ajouter(c);
         chargerConges();
         viderFormulaire();
-        succes("✔ Congé enregistré avec succès.");
+        succes("✔ Congé ajouté avec succès.");
+        
+        
     }
-
     @FXML
     private void modifierConge() {
         Conge selected = tableConges.getSelectionModel().getSelectedItem();
