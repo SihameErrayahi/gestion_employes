@@ -455,8 +455,39 @@ public class CongeController {
 
             int dejaPris = congeDAO.getJoursPrisAnnuel(employeId, annee);
 
+            // 🔥 déjà atteint 30 jours
+            if (dejaPris >= 30) {
+                erreur("⚠ Congé annuel déjà atteint pour cette année.");
+                return;
+            }
+
+            boolean annuelEnAttente = congeDAO.getTous().stream()
+                    .anyMatch(conge ->
+                            conge.getEmployeId() == employeId &&
+                            conge.getType() == Conge.Type.ANNUEL &&
+                            conge.getStatut() == Conge.Statut.EN_ATTENTE &&
+                            LocalDate.parse(conge.getDateDebut()).getYear() == annee
+                    );
+
+            if (annuelEnAttente && comboType.getValue() == Conge.Type.ANNUEL) {
+                erreur("⚠ Le congé annuel précédent est encore en attente.");
+                return;
+            }
+            
+            // 🔥 dépassement direct
+            if (jours > 30) {
+                erreur("⚠ Vous dépassez 30 jours de congé annuel.");
+                return;
+            }
+
+            // 🔥 dépasse le reste
             if (dejaPris + jours > 30) {
-                erreur("⚠ Limite 30 jours de congé annuel atteinte.");
+
+                int reste = 30 - dejaPris;
+
+                erreur("⚠ Impossible : il reste seulement "
+                        + reste + " jour(s) de congé annuel.");
+
                 return;
             }
         }
@@ -466,8 +497,39 @@ public class CongeController {
 
             int dejaPris = congeDAO.getJoursPrisMaternite(employeId, annee);
 
+            boolean materniteEnAttente = congeDAO.getTous().stream()
+                    .anyMatch(conge ->
+                            conge.getEmployeId() == employeId &&
+                            conge.getType() == Conge.Type.MATERNITE &&
+                            conge.getStatut() == Conge.Statut.EN_ATTENTE &&
+                            LocalDate.parse(conge.getDateDebut()).getYear() == annee
+                    );
+
+            if (materniteEnAttente && comboType.getValue() == Conge.Type.MATERNITE) {
+                erreur("⚠ Le congé maternité précédent est encore en attente.");
+                return;
+            } 
+            
+            // 🔥 déjà atteint 90 jours
+            if (dejaPris >= 90) {
+                erreur("⚠ Congé maternité déjà atteint pour cette année.");
+                return;
+            }
+
+            // 🔥 dépassement direct
+            if (jours > 90) {
+                erreur("⚠ Vous dépassez 90 jours de congé maternité.");
+                return;
+            }
+
+            // 🔥 dépasse le reste
             if (dejaPris + jours > 90) {
-                erreur("⚠ Limite 90 jours de congé maternité atteinte.");
+
+                int reste = 90 - dejaPris;
+
+                erreur("⚠ Impossible : il reste seulement "
+                        + reste + " jour(s) de congé maternité.");
+
                 return;
             }
         }
