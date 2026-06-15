@@ -27,7 +27,10 @@
         </HBox>
 
         <HBox spacing="10" alignment="CENTER_LEFT">
-            <TextField fx:id="fieldBase"     promptText="Salaire base *" prefWidth="160"/>
+            <TextField fx:id="fieldBase"
+           editable="false"
+           promptText="Salaire base *"
+           prefWidth="160"/>
             <TextField fx:id="fieldPrimes"   promptText="Primes"         prefWidth="160"/>
             <TextField fx:id="fieldRetenues" promptText="Retenues"       prefWidth="160"/>
             <VBox spacing="2" style="-fx-padding: 0 0 0 10;">
@@ -50,9 +53,11 @@
 
     <!-- FILTRE PAR EMPLOYE -->
     <HBox spacing="10" alignment="CENTER_LEFT">
-        <Label text="Filtrer par employé :" style="-fx-font-size: 13px;"/>
-        <ComboBox fx:id="comboFiltreEmploye" promptText="Tous les employés" prefWidth="240"/>
-    </HBox>
+    <Label text="Rechercher :" />
+    <TextField fx:id="fieldRecherche"
+               promptText="Nom de l'employé..."
+               prefWidth="250"/>
+</HBox>
 
     <TableView fx:id="tableSalaires" VBox.vgrow="ALWAYS">
         <columns>

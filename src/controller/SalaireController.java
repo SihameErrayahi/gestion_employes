@@ -24,7 +24,7 @@ public class SalaireController {
     @FXML private TableColumn<Salaire, Double>  colNet;
 
     @FXML private ComboBox<Employe> comboEmploye;
-    @FXML private ComboBox<String>  comboFiltreEmploye;
+    
     @FXML private TextField         fieldMois;
     @FXML private TextField         fieldBase;
     @FXML private TextField         fieldPrimes;
@@ -32,6 +32,7 @@ public class SalaireController {
     @FXML private Label             labelNet;
     @FXML private Label             labelMessage;
     @FXML private Label             labelStats;
+    @FXML private TextField fieldRecherche;
 
     private final SalaireDAO salaireDAO = new SalaireDAO();
     private final EmployeDAO employeDAO = new EmployeDAO();
@@ -57,21 +58,14 @@ public class SalaireController {
 
         comboEmploye.setItems(FXCollections.observableArrayList(employeDAO.getTous()));
 
-        // Filtre employé
-        ObservableList<String> filtreOptions = FXCollections.observableArrayList("Tous les employés");
-        employeDAO.getTous().forEach(e -> filtreOptions.add(e.getNomComplet()));
-        comboFiltreEmploye.setItems(filtreOptions);
-        comboFiltreEmploye.setValue("Tous les employés");
-        comboFiltreEmploye.valueProperty().addListener((obs, a, b) -> filtrerParEmploye(b));
-
-        // Calcul net en temps réel
+         // Calcul net en temps réel
         fieldBase.textProperty().addListener((o, a, b) -> calculerNet());
         fieldPrimes.textProperty().addListener((o, a, b) -> calculerNet());
         fieldRetenues.textProperty().addListener((o, a, b) -> calculerNet());
 
         // Remplissage auto salaire de base depuis l'employé sélectionné
         comboEmploye.valueProperty().addListener((obs, ancien, nouveau) -> {
-            if (nouveau != null && fieldBase.getText().isBlank()) {
+            if (nouveau != null) {
                 fieldBase.setText(String.valueOf(nouveau.getSalaireBase()));
             }
         });
@@ -79,6 +73,27 @@ public class SalaireController {
         listeSalaires = FXCollections.observableArrayList();
         listeFiltree  = new FilteredList<>(listeSalaires, p -> true);
         tableSalaires.setItems(listeFiltree);
+        fieldRecherche.textProperty().addListener((obs, oldValue, newValue) -> {
+
+            String recherche = newValue.toLowerCase().trim();
+
+            listeFiltree.setPredicate(salaire -> {
+
+                if (recherche.isEmpty()) {
+                    return true;
+                }
+
+                Employe emp = employeDAO.getParId(salaire.getEmployeId());
+
+                if (emp == null) {
+                    return false;
+                }
+
+                return emp.getNomComplet()
+                          .toLowerCase()
+                          .contains(recherche);
+            });
+        });
 
         tableSalaires.getSelectionModel().selectedItemProperty().addListener(
             (obs, ancien, nouveau) -> remplirFormulaire(nouveau));
@@ -240,6 +255,33 @@ public class SalaireController {
 
         if (retenues > base + primes) {
             erreur("⚠ Retenues trop grandes.");
+            return false;
+        }
+     // Salaire de base
+        if (base < 3000) {
+            erreur("⚠ Le salaire de base ne peut pas être inférieur à 3000 DH.");
+            return false;
+        }
+
+        if (base > 100000) {
+            erreur("⚠ Salaire de base trop élevé.");
+            return false;
+        }
+     // Primes
+        if (primes > base) {
+            erreur("⚠ Les primes ne peuvent pas dépasser le salaire de base.");
+            return false;
+        }
+     // Retenues
+        if (retenues > (base + primes) * 0.8) {
+            erreur("⚠ Les retenues dépassent 80% du salaire.");
+            return false;
+        }
+     // Salaire net
+        double net = base + primes - retenues;
+
+        if (net <= 0) {
+            erreur("⚠ Le salaire net doit être positif.");
             return false;
         }
 
